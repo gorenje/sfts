@@ -1,0 +1,181 @@
+# -*- fundamental -*-
+# Sounds from the Scape Config file
+#
+serverVolume: -7.5590551181102
+title: "four pendulums"
+allPadIds: [pad0,pad1,pad2,pad3,pad4,pad5,pad6,pad7,pad8,pad9,pad10,pad11,pad12,pad13]
+pad0:
+  padnum: 0
+  note: 222
+  filename: "./samples//0/2/0278.wav"
+  comment: "Wine Glass - part 2, 6.78 s"
+  values: [35,40,20,80,33,63,83,64]
+  synth: sample-synth
+  pendulums: [pend001,pend003,pend005]
+
+pend001:
+  type: Timer
+  startValue: 8
+  endValue: 20
+  timeRangeValue: 14.5
+  startDelay: 27.2
+  endDelay: 69.0
+  argnum: 3
+pend002:
+  type: Timer
+  startValue: 30
+  endValue: 20
+  timeRangeValue: 17.0
+  startDelay: 24.2
+  endDelay: 69.0
+  argnum: 3
+pend003:
+  type: Timer
+  startValue: 25
+  endValue: 20
+  timeRangeValue: 21.0
+  startDelay: 54.2
+  endDelay: 89.0
+  argnum: 3
+pend004:
+  type: Timer
+  startValue: 35
+  endValue: 20
+  timeRangeValue: 12.0
+  startDelay: 57.2
+  endDelay: 89.0
+  argnum: 3
+pend005:
+  type: Timer
+  startValue: 55
+  endValue: 20a
+  timeRangeValue: 32.0
+  startDelay: 157.2
+  endDelay: 89.0
+  argnum: 3
+
+
+pad1:
+  padnum: 1
+  note: 222
+  filename: "./samples//0/2/0278.wav"
+  comment: "Wine Glass - part 2, 6.78 s"
+  values: [35,50,20,84,42,64,77,62]
+  synth: sample-synth
+  pendulums: [pend002,pend005]
+
+pad2:
+  padnum: 2
+  note: 222
+  filename: "./samples//0/2/0278.wav"
+  comment: "Wine Glass - part 2, 6.78 s"
+  values: [35,84,20,86,17,64,64,64]
+  synth: sample-synth
+  pendulums: [pend001]
+
+pad3:
+  padnum: 3
+  note: 222
+  filename: "./samples//0/2/0278.wav"
+  comment: "Wine Glass - part 2, 6.78 s"
+  values: [36,83,20,80,31,64,64,64]
+  synth: sample-synth
+  pendulums: [pend002,pend004]
+
+pad4:
+  padnum: 4
+  note: 222
+  filename: "./samples//0/2/0278.wav"
+  comment: "Wine Glass - part 2, 6.78 s"
+  values: [35,64,20,86,36,69,85,63]
+  synth: sample-synth
+  pendulums: [pend001,pend003]
+
+pad5:
+  padnum: 5
+  note: 222
+  filename: "./samples//0/2/0278.wav"
+  comment: "Wine Glass - part 2, 6.78 s"
+  values: [35,64,20,83,41,64,77,62]
+  synth: sample-synth
+  pendulums: [pend002]
+
+pad6:
+  padnum: 6
+  note: 222
+  filename: "./samples//0/2/0278.wav"
+  comment: "Wine Glass - part 2, 6.78 s"
+  values: [35,64,20,106,32,64,100,71]
+  synth: sample-synth
+  pendulums: [pend001,pend005]
+
+pad7:
+  padnum: 7
+  note: 222
+  filename: "./samples//0/2/0278.wav"
+  comment: "Wine Glass - part 2, 6.78 s"
+  values: [35,41,20,53,18,64,64,64]
+  synth: sample-synth
+  pendulums: [pend002,pend004,pend005]
+
+pad8:
+  padnum: 8
+  note: 97
+  filename: "./samples//0/2/0264.wav"
+  comment: "Lid of pot rolling on kitchen top, 0:00:45"
+  values: [22,64,11,75,51,64,105,85]
+  synth: sample-synth-superslow
+  pendulums: []
+
+pad9:
+  padnum: 9
+  note: 97
+  filename: "./samples//0/2/0264.wav"
+  comment: "Lid of pot rolling on kitchen top, 0:00:45"
+  values: [16,46,11,75,46,64,105,85]
+  synth: sample-synth-superslow
+  pendulums: []
+
+pad10:
+  padnum: 10
+  note: 97
+  filename: "./samples//0/2/0264.wav"
+  comment: "Lid of pot rolling on kitchen top, 0:00:45"
+  values: [16,64,11,75,49,64,105,85]
+  synth: sample-synth-superslow
+  pendulums: []
+
+pad11:
+  padnum: 11
+  note: 97
+  filename: "./samples//0/2/0264.wav"
+  comment: "Lid of pot rolling on kitchen top, 0:00:45"
+  values: [16,64,11,75,49,64,105,85]
+  synth: sample-synth-superslow
+  pendulums: []
+
+pad12:
+  padnum: 12
+  note: 43
+  filename: "./samples//0/7/0774.wav"
+  comment: "bong bong drums with rhythmn stick 2, 14.37 s"
+  values: [10,64,7,64,0,104,79,64]
+  synth: sample-synth-superslow
+  pendulums: [pend12_0]
+pend12_0:
+  type: Timer
+  startValue: 74
+  endValue: 0
+  timeRangeValue: 11.0
+  startDelay: 1.0
+  endDelay: 0.0
+  argnum: 5
+
+pad13:
+  padnum: 13
+  note: 49
+  filename: "./samples//0/7/0787.wav"
+  comment: "Bowls within bowls in a bowl - part 4, 3.22 s"
+  values: [10,64,11,87,20,64,64,75]
+  synth: sample-synth-superslow
+  pendulums: []

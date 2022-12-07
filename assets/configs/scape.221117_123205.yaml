@@ -1,0 +1,41 @@
+# -*- fundamental -*-
+# Sounds from the Scape Config file
+# 
+serverVolume: 0.075142829703159
+title: "config.221107_094901.yaml"
+allPadIds: [pad7,pad11,pad13,pad14]
+pad7:
+  padnum: 7
+  note: 225
+  filename: "./samples//0/8/0856.wav"
+  comment: "Wine Glass with wet finger - part 1, 22.94 s"
+  values: [27,62,14,113,32,113,125,41]
+  synth: sample-synth
+  pendulums: []
+
+pad11:
+  padnum: 11
+  note: 227
+  filename: "./samples//0/8/0858.wav"
+  comment: "Wine Glass with wet finger - part 3, 0:00:34"
+  values: [22,64,4,85,11,25,127,83]
+  synth: sample-synth-superslow
+  pendulums: []
+
+pad13:
+  padnum: 13
+  note: 88
+  filename: "./samples//0/6/0643.wav"
+  comment: "Heating element - part 1, 7.08 s"
+  values: [1,64,3,64,64,64,64,64]
+  synth: sample-synth
+  pendulums: []
+
+pad14:
+  padnum: 14
+  note: 226
+  filename: "./samples//0/8/0857.wav"
+  comment: "Wine Glass with wet finger - part 2, 20.24 s"
+  values: [22,64,7,88,76,75,108,80]
+  synth: sample-synth
+  pendulums: []

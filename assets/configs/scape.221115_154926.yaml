@@ -1,0 +1,59 @@
+# -*- fundamental -*-
+# Sounds from the Scape Config file
+# 
+serverVolume: 0.0
+title: ""
+allPadIds: [pad1,pad2,pad3,pad4,pad5,pad6]
+pad1:
+  padnum: 1
+  note: 225
+  filename: "./samples//0/8/0856.wav"
+  comment: "Wine Glass with wet finger - part 1, 22.94 s"
+  values: [14,52,24,113,32,113,125,41]
+  synth: sample-synth
+  pendulums: []
+
+pad2:
+  padnum: 2
+  note: 226
+  filename: "./samples//0/8/0857.wav"
+  comment: "Wine Glass with wet finger - part 2, 20.24 s"
+  values: [15,81,14,88,76,75,108,80]
+  synth: sample-synth
+  pendulums: []
+
+pad3:
+  padnum: 3
+  note: 227
+  filename: "./samples//0/8/0858.wav"
+  comment: "Wine Glass with wet finger - part 3, 0:00:34"
+  values: [10,40,4,85,11,25,127,83]
+  synth: sample-synth-superslow
+  pendulums: []
+
+pad4:
+  padnum: 4
+  note: 228
+  filename: "./samples//0/8/0859.wav"
+  comment: "Wine Glass with wet finger - part 4, 29.55 s"
+  values: [11,92,35,48,30,127,9,64]
+  synth: sample-synth-superslow
+  pendulums: []
+
+pad5:
+  padnum: 5
+  note: 229
+  filename: "./samples//0/8/0860.wav"
+  comment: "Wine Glass with wet finger - part 5, 17.21 s"
+  values: [9,38,14,107,11,100,93,64]
+  synth: sample-synth-superslow
+  pendulums: []
+
+pad6:
+  padnum: 6
+  note: 230
+  filename: "./samples//0/8/0861.wav"
+  comment: "Wine Glass with wet finger - part 6, 14.59 s"
+  values: [22,97,12,80,19,82,82,64]
+  synth: sample-synth-superslow
+  pendulums: []

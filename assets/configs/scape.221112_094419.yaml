@@ -1,0 +1,68 @@
+# -*- fundamental -*-
+# Sounds from the Scape Config file
+# 
+serverVolume: 0.0
+title: "config.221112_092958.yaml"
+allPadIds: [pad2,pad3,pad6,pad7,pad8,pad9,pad10]
+pad2:
+  padnum: 2
+  note: 29
+  filename: "./samples//0/1/0161.wav"
+  comment: "Bird chirp + Wind chimes (buddhist temple b.), 5.16 s"
+  values: [6,64,8,94,76,64,79,71]
+  synth: sample-synth
+  pendulums: []
+
+pad3:
+  padnum: 3
+  note: 29
+  filename: "./samples//0/1/0161.wav"
+  comment: "Bird chirp + Wind chimes (buddhist temple b.), 5.16 s"
+  values: [11,64,8,93,57,64,79,75]
+  synth: sample-synth
+  pendulums: []
+
+pad6:
+  padnum: 6
+  note: 222
+  filename: "./samples//0/2/0278.wav"
+  comment: "Wine Glass - part 2, 6.78 s"
+  values: [2,74,19,85,71,64,64,64]
+  synth: sample-synth
+  pendulums: []
+
+pad7:
+  padnum: 7
+  note: 222
+  filename: "./samples//0/2/0278.wav"
+  comment: "Wine Glass - part 2, 6.78 s"
+  values: [2,55,20,77,73,64,64,84]
+  synth: sample-synth
+  pendulums: []
+
+pad8:
+  padnum: 8
+  note: 19
+  filename: "./samples//0/3/0366.wav"
+  comment: "bird calls - part 3 or 4, 7.89 s"
+  values: [2,64,22,64,65,64,64,64]
+  synth: sample-synth
+  pendulums: []
+
+pad9:
+  padnum: 9
+  note: 222
+  filename: "./samples//0/2/0278.wav"
+  comment: "Wine Glass - part 2, 6.78 s"
+  values: [2,47,21,64,51,64,64,64]
+  synth: sample-synth
+  pendulums: []
+
+pad10:
+  padnum: 10
+  note: 222
+  filename: "./samples//0/2/0278.wav"
+  comment: "Wine Glass - part 2, 6.78 s"
+  values: [2,82,22,64,58,64,64,64]
+  synth: sample-synth
+  pendulums: []
