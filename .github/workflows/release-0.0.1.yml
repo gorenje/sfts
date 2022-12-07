@@ -27,7 +27,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: Dockerfile.hub
+          file: Dockerfile
           push: true
           tags: gorenje/sfts:0.0.1
       -

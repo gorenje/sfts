@@ -107,6 +107,8 @@ Start the application with
 $(readlink ./sclang) -l .sclang_conf.yaml gui.scd
 ```
 
+You might also have to install the [exiftool](https://exiftool.org/) for the samples to have names and be listed. I make an assumption that is already installed, for MacOS there is a copy of [exiftool](/assets/mac_app/exiftool) or install it via [brew](https://formulae.brew.sh/formula/exiftool).
+
 
 ### Dockerfile
 
