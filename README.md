@@ -112,17 +112,16 @@ You might also have to install the [exiftool](https://exiftool.org/) for the sam
 
 ### Dockerfile
 
-There is also a docker file that can be used to create an container, this also requires make and probably is best done using Linux:
+There is also a docker file that can be used to create an container:
 
 ```
-make docker-run-on-debian-linux
+docker build -t sfts-supercollider -f Dockerfile . && docker run --rm --net=host --env DISPLAY=${DISPLAY} --env XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR} --privileged --device /dev/snd --device /dev/midi* --group-add audio --volume ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR} --volume $$XAUTHORITY:${HOME}/.Xauthority sfts-supercollider make random-composer
 ```
 
-That make task represents two commands:
+Releases are also available from [DockerHub](https://hub.docker.com), for examples release 0.0.1:
 
 ```
-docker build -t sfts-supercollider -f Dockerfile  .
-docker run --rm --net=host --env DISPLAY=${DISPLAY} --env XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR} --privileged --device /dev/snd --device /dev/midi* --group-add audio --volume ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR} --volume $$XAUTHORITY:${HOME}/.Xauthority sfts-supercollider make random-composer
+docker run --rm --net=host --env DISPLAY=${DISPLAY} --env XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR} --privileged --device /dev/snd --device /dev/midi* --group-add audio --volume ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR} --volume $$XAUTHORITY:${HOME}/.Xauthority gorenje/sfts:0.0.1 make random-composer
 ```
 
 
