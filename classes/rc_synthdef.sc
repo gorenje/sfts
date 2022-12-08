@@ -1,5 +1,4 @@
 RcSynthDef {
-
     var <>synthLookup;
 
     *new { |a,b|
@@ -32,7 +31,7 @@ RcSynthDef {
         SynthDef.new(synth_name, { |arg0=32,  arg1=64, arg2=32, arg3=64,
             arg4=64, arg5=64, arg6=64, arg7=64,
             vel=nil, num=nil, out=0, bufnum=nil,
-			sampleIdx=inf, padNr=nil|
+            sampleIdx=inf, padNr=nil|
 
             var dialSpec = [0,127,\lin].asSpec;
 
@@ -122,7 +121,7 @@ RcSynthDef {
         SynthDef.new(synth_name, { |arg0=32,  arg1=64, arg2=96, arg3=64,
             arg4=0, arg5=64, arg6=64, arg7=64,
             vel=nil, num=nil, out=0, bufnum=nil,
-			sampleIdx=inf, padNr=nil|
+            sampleIdx=inf, padNr=nil|
 
             var dialSpec = [0,127,\lin].asSpec;
 

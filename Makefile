@@ -39,6 +39,9 @@ osx-release:
 	cd sc_osx_standalone && mv run.sh SoundsFromTheScape.sh
 	echo "Now start Platypus to build app"
 
+extensions-folder:
+	@echo "Platform.userExtensionDir" | $$(readlink ./sclang) 2>/dev/null | grep -- "->" | colrm 1 3
+
 shell:
 	${SCLANG} -l .sclang_conf.yaml
 

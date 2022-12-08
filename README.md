@@ -27,25 +27,25 @@ What does this all do:
 <img src="/assets/screen-1.png"/>
 
 - `Sample Effect Values`
-    
+
     Effects that can be applied to a sample. Things like pan, reverb, volume and frequency. Each of the eight dials all duplicated for all 16 samples, i.e., each sample has its own values for each effect and those values are shown in the `Playing Samples Area`.
 
 - `Pendulum Selector`
-    
+
     Pendulums are triggers that move the dials automatically. Things like timer that moves a dial between two values in a give period of time. Record which records the changes to a dial of a period of time and endlessly replays those.
-    
-- `Synth and Sample Selector` 
-    
+
+- `Synth and Sample Selector`
+
     Here a synth can be selected and then a sample is selected. The sample is then shown in the `Notes Playing` area. Once the note is clicked on, it is moved the the `Playing Samples Area`. This is done because the application was built with a midi controller with keys. So pressing a key would initially have the note playing and if a pad was hit the note was moved in the samples area. If the key was lifted, the note was removed again.
-    
-- `Playing Samples Area` 
+
+- `Playing Samples Area`
 
     All samples that are currently playing are shown here. The can be removed with a right click. All effects of a sample can be adjusted by using the mouse on the dials. The synth of a sample can be changed by using the synth dropdown for that sample.
-    
+
 - `Notes Playing`
-    
+
     All notes are shown here. They can be moved to the samples area with a left click on the number-label or removed with a right click on the number label.
-    
+
 Top left hand corner is the `Load Scape` button for loading a scape, this is a good place to begin to have something playing.
 
 ## Setup
@@ -86,7 +86,7 @@ mkdir plugins && cd plugins && unzip ../assets/PortedPlugins-macos.zip && cd ..
 On Linux:
 
 ```
-mkdir plugins && cd plugins && unzip ../assets/PortedPlugins-Linux.zip && cd ..
+unzip assets/PortedPlugins-Linux.zip -d $(make extensions-folder)
 ```
 
 Create a soft link to the samples directory in the assets folder:
@@ -139,4 +139,3 @@ A collection of samples soundscapes on [SoundCloud](https://soundcloud.com/user-
 ## What is the hardest thing to do?
 
 > The hardest thing to describe is oneself, which is closely followed by the second hardest thing to describe: ones own projects. - Me.
-

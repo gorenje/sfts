@@ -78,7 +78,7 @@ RcPendulumBase {
            ["Fade Out",  RcPendulumFadeOut],
            ["Randomise", RcPendulumRandomise],
            ["Delete",    RcPendulumRemove],
-        ].repeatItems(3);
+        ];
     }
 
     initEmpty {

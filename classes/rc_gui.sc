@@ -13,6 +13,10 @@ RcGui {
     var <>titleField;
     var <>padCtrl;
 
+    // BlackBoard for storing random stuff that is used somewhere in random
+    // places.
+    var <>bb;
+
     *new {
         ^super.new.init();
     }
@@ -31,6 +35,7 @@ RcGui {
         dialValues     = Array.newClear(indexedSize: 8);
         synthType      = 0;
         playingNotes   = nil!1024;
+        bb             = Dictionary.new;
 
         // Dial naming lookup
         knobNameLookup.add( 0 -> "Volume (32 = 1-to-1)");
@@ -183,13 +188,13 @@ RcGui {
 
     asOSC { |netAddr|
         pads.do { |p,idx|
-			try {
-				if ( p.isDefined, {
+            try {
+                if ( p.isDefined, {
                     netAddr.sendMsg( *p.asOSC(idx) );
-				}, {
+                }, {
                     netAddr.sendMsg( *RcPadDef.asOSCZero(idx) );
-				});
-			} {};
+                });
+            } {};
         };
     }
 

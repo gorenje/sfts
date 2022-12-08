@@ -1,4 +1,3 @@
-
 RcPadDefColours {
     classvar <padColours;
 
@@ -54,15 +53,15 @@ RcPadDef {
         ^super.new.init(main_view, comment_view, rowNum, colNum);
     }
 
-	*asOSCZero { |idx|
-		^[RcPadDef.oscPadId(idx), -1,
+    *asOSCZero { |idx|
+        ^[RcPadDef.oscPadId(idx), -1,
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             "zero", 0.0];
-	}
+    }
 
-	*oscPadId { |idx|
-		^format( "/pad%", idx.asInteger ).asSymbol;
-	}
+    *oscPadId { |idx|
+        ^format( "/pad%", idx.asInteger ).asSymbol;
+    }
 
     init { |mView, cView, rowNum, colNum|
         knobs       = List.new();
@@ -146,9 +145,9 @@ RcPadDef {
         rVal.add( RcPadDef.oscPadId(pNum) );
 
         rVal.add( if ( sampleIdx.isNil,
-			{ noteNum.asInteger },
-			{ sampleIdx.asInteger })
-		);
+            { noteNum.asInteger },
+            { sampleIdx.asInteger })
+        );
 
         knobs.do { |a| rVal.add( a.value.asInteger / 127 ) };
         rVal.add( synth.defName );
