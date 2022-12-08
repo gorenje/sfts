@@ -18,8 +18,8 @@ docker-run-interactive: docker-build
 	docker run --rm --net=host --env DISPLAY=${DISPLAY} --env XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR} --privileged --device /dev/snd --device /dev/midi* --group-add audio --volume ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR} --volume $$XAUTHORITY:${HOME}/.Xauthority -it sfts-supercollider /bin/bash
 
 osx-release:
-	#echo "DANGER: Distructive action, edit Makefile and remove this notice"
-	#and_remove_this
+	echo "DANGER: Distructive action, edit Makefile and remove this notice"
+	and_remove_this
 	## Destruction and disaster follow .... beware
 	rm -fr sc_osx_standalone
 	git clone --depth=1 --branch 3.12.2a git@github.com:dathinaios/sc_osx_standalone.git
@@ -27,7 +27,7 @@ osx-release:
 	cd sc_osx_standalone && timeout 5 sh run.sh || :
 	rm -fr sc_osx_standalone/Resources/sounds/*
 	cp assets/mac_app/exiftool sc_osx_standalone/Resources
-	cd sc_osx_standalone && mkdir Resources/assets SCClassLibrary/install
+	cd sc_osx_standalone && mkdir Resources/assets
 	cp -R assets/configs sc_osx_standalone/Resources/assets/
 	cp -R assets/samples sc_osx_standalone/Resources/assets/
 	cd sc_osx_standalone && ln -s Resources/assets/samples
@@ -35,7 +35,8 @@ osx-release:
 	yes | cp assets/mac_app/init.scd sc_osx_standalone/init.scd
 	cp classes/* sc_osx_standalone/SCClassLibrary
 	cp extensions/* sc_osx_standalone/SCClassLibrary
-	cd sc_osx_standalone/SCClassLibrary/install && unzip ../../../assets/PortedPlugins-macos.zip
+	cd sc_osx_standalone/Resources/plugins && unzip ../../../assets/PortedPlugins-macos.zip && mv PortedPlugins/* . && mv Classes/* ../SCClassLibrary && rm -fr Classes
+	cd sc_osx_standalone && mv run.sh SoundsFromTheScape.sh
 	echo "Now start Platypus to build app"
 
 shell:
