@@ -45,14 +45,15 @@ cfgMgr           = RcConfig.new(optsDir, gui, s);
 
 randomBlackBoard.add("currChannel" -> 0);
 
-
 // Written for an Arturia MiniLab Mark 2 with a very specific midi controller
 // mapping.
 try {
     MIDIIn.connectAll;
 } {};
 
-if ( File.exists( optsDir ).not, { File.mkdir( optsDir )});
+if ( File.exists( optsDir ).not, {
+    File.mkdir( optsDir );
+});
 
 Platform.case(
     \osx, {
@@ -367,7 +368,7 @@ gui.allSamples  = allSamples;
     });
 };
 
-~midiOneButtonPressed = { |src, chan, num, val|
+~midiSampleSelectorPressed = { |src, chan, num, val|
     if ( num == 17, {
         ~runOnAppClock.value({
             gui.sampleSelector.valueAction_(gui.sampleSelector.value);
@@ -375,9 +376,9 @@ gui.allSamples  = allSamples;
     });
 };
 
-~midiOneButtonDialed = { |src, chan, num, val|
+~midiSampleSelector = { |src, chan, num, val|
     if ( (num == 9) && (val != 64), {
-        ~runOnAppClock.value({
+        gui.bb["sampleSelectorCounter"].willSomethingChange(val, { |val|
             if ( val > 64, {
                 gui.sampleSelector.value = (gui.sampleSelector.value + 1).min(gui.sampleSelector.items.size-1);
             }, {
@@ -387,7 +388,7 @@ gui.allSamples  = allSamples;
     });
 };
 
-~midiNineButtonPressed = { |src, chan, num, val|
+~midiPendulumSelectorPressed = { |src, chan, num, val|
     if ( num == 18, {
         if ( pendSettings.isLoaded, {
             pendSettings.go;
@@ -404,6 +405,24 @@ gui.allSamples  = allSamples;
     });
 };
 
+~midiPendulumSelector = { |src, chan, num, val|
+    if ( (num == 11) && (val != 64), {
+        gui.bb["pendulumSelectorCounter"].willSomethingChange(val, { |val|
+            if (  val > 64, {
+                if ( gui.pendulumSelection.value != (gui.pendulumSelection.items.size-1), {
+                    gui.pendulumSelection.value = (gui.pendulumSelection.value + 1).min(gui.pendulumSelection.items.size-1);
+                    gui.pendulumSelection.valueAction_(gui.pendulumSelection.value);
+                });
+            }, {
+                if ( gui.pendulumSelection.value != 0, {
+                    gui.pendulumSelection.value = 0.max(gui.pendulumSelection.value - 1);
+                    gui.pendulumSelection.valueAction_(gui.pendulumSelection.value);
+                });
+            });
+        });
+    });
+};
+
 ~midiPendulumSettings = { |src, chan, num, val|
     if ( val != 64, {
         switch( num,
@@ -413,6 +432,7 @@ gui.allSamples  = allSamples;
         );
     });
 };
+
 
 ~midiGlobalVolume = { |src, chan, num, val|
     if ( (num == 15) && (val != 64), {
@@ -427,19 +447,20 @@ gui.allSamples  = allSamples;
     });
 };
 
-~midiTenButtonDialed = { |src, chan, num, val|
+~midiSynthSelector = { |src, chan, num, val|
     if ( (num == 14) && (val != 64), {
-        ~runOnAppClock.value({
-            if (  val > 64, {
+        gui.bb["synthSelectorCounter"].willSomethingChange(val, { |val|
+            if ( val > 64, {
                 if ( gui.synthSelection.value != (gui.synthSelection.items.size-1), {
                     gui.synthSelection.value = (gui.synthSelection.value + 1).min(gui.synthSelection.items.size-1);
+                    gui.synthSelection.valueAction_(gui.synthSelection.value);
                 });
             }, {
                 if ( gui.synthSelection.value != 0, {
                     gui.synthSelection.value = 0.max(gui.synthSelection.value - 1);
+                    gui.synthSelection.valueAction_(gui.synthSelection.value);
                 });
             });
-            gui.synthSelection.valueAction_(gui.synthSelection.value);
         });
     });
 };
@@ -447,30 +468,6 @@ gui.allSamples  = allSamples;
 ~midiBusFiller = { |src, chan, num, val|
     midiBus.push( [src, chan, num, val] )
 };
-
-
-// this is the pendulum type dialer
-midiBus.add_listener( { |tstamp, src, chan, num, val|
-    if ( (num == 11) && (val != 64), {
-        ~runOnAppClock.value({
-            if (  val > 64, {
-                if ( gui.pendulumSelection.value == (gui.pendulumSelection.items.size-1),
-                    {
-                        gui.pendulumSelection.value = 0;
-                    }, {
-                        gui.pendulumSelection.value = (gui.pendulumSelection.value + 1).min(gui.pendulumSelection.items.size-1);
-                    });
-            }, {
-                if ( gui.pendulumSelection.value == 0, {
-                    gui.pendulumSelection.value = gui.pendulumSelection.items.size-1;
-                },{
-                    gui.pendulumSelection.value = 0.max(gui.pendulumSelection.value - 1);
-                });
-            });
-            gui.pendulumSelection.valueAction_(gui.pendulumSelection.value);
-        });
-    });
-});
 
 MIDIIn.addFuncTo(\noteOff, ~noteOff);
 MIDIIn.addFuncTo(\noteOn,  ~noteOn);
@@ -481,12 +478,13 @@ MIDIIn.addFuncTo(\control, ~midiStartRecord);
 MIDIIn.addFuncTo(\control, ~midiSelectActivePad);
 MIDIIn.addFuncTo(\control, ~controlPads);
 
-MIDIIn.addFuncTo(\control, ~midiOneButtonPressed);
-MIDIIn.addFuncTo(\control, ~midiOneButtonDialed);
-MIDIIn.addFuncTo(\control, ~midiNineButtonPressed);
+MIDIIn.addFuncTo(\control, ~midiSampleSelectorPressed);
+MIDIIn.addFuncTo(\control, ~midiSampleSelector);
+MIDIIn.addFuncTo(\control, ~midiPendulumSelectorPressed);
 MIDIIn.addFuncTo(\control, ~midiPendulumSettings);
+MIDIIn.addFuncTo(\control, ~midiPendulumSelector);
 
-MIDIIn.addFuncTo(\control, ~midiTenButtonDialed);
+MIDIIn.addFuncTo(\control, ~midiSynthSelector);
 MIDIIn.addFuncTo(\control, ~midiGlobalVolume);
 
 MIDIIn.addFuncTo(\control, { |src, chan, num, val|
@@ -502,7 +500,7 @@ MIDIIn.addFuncTo(\control, { |src, chan, num, val|
     });
 });
 
-randomBlackBoard.add("shiftpressed" -> false);
+randomBlackBoard.add("shiftpressed" -> false); // midi shift button
 MIDIIn.addFuncTo(\sysex, { |src, chan, num, vel|
     // is the shift button being pressed?
     if ( (chan[9] == 46), {
@@ -527,7 +525,7 @@ MIDIIn.addFuncTo(\sysex, { |src, chan, num, vel|
 //
 // Debug functionality ...
 //
-// RcDebug.new(MIDIIn);
+//RcDebug.new(MIDIIn);
 
 ~queryNotesOn = {
     gui.notes.select { |n| n.noteNum.notNil }.collect { |l| l.noteNum };
@@ -637,31 +635,31 @@ cfgMgr.addSample = ~addSample;
         };
     };
 
-	Platform.case( \osx, {
-		outDevSelector = PopUpMenu(mainWindow, Rect(780, 10, 150, 25));
-		outDevSelector.items = ServerOptions.outDevices;
-		outDevSelector.value = Dictionary.newFrom(ServerOptions.outDevices.
-			collect { |a,i| [a,i] }.flatten)[s.options.outDevice];
-		outDevSelector.action = { |button|
-			s.options.outDevice = ServerOptions.outDevices[button.value];
-			s.reboot();
-			s.waitForBoot();
-		};
+    Platform.case( \osx, {
+        outDevSelector = PopUpMenu(mainWindow, Rect(780, 10, 150, 25));
+        outDevSelector.items = ServerOptions.outDevices;
+        outDevSelector.value = Dictionary.newFrom(ServerOptions.outDevices.
+            collect { |a,i| [a,i] }.flatten)[s.options.outDevice];
+        outDevSelector.action = { |button|
+            s.options.outDevice = ServerOptions.outDevices[button.value];
+            s.reboot();
+            s.waitForBoot();
+        };
 
-		inDevSelector = PopUpMenu(mainWindow, Rect(940, 10, 150, 25));
-		inDevSelector.items = ServerOptions.inDevices;
-		inDevSelector.value = Dictionary.newFrom(ServerOptions.inDevices.
-			collect { |a,i| [a,i] }.flatten)["Built-in Microph"];
-		inDevSelector.action = { |button|
-			s.options.inDevice = ServerOptions.inDevices[button.value];
-			s.reboot();
-			s.waitForBoot();
-		};
+        inDevSelector = PopUpMenu(mainWindow, Rect(940, 10, 150, 25));
+        inDevSelector.items = ServerOptions.inDevices;
+        inDevSelector.value = Dictionary.newFrom(ServerOptions.inDevices.
+            collect { |a,i| [a,i] }.flatten)["Built-in Microph"];
+        inDevSelector.action = { |button|
+            s.options.inDevice = ServerOptions.inDevices[button.value];
+            s.reboot();
+            s.waitForBoot();
+        };
 
-		sampleRateButton = Button(mainWindow, Rect(1100, 10, 120, 25));
-		sampleRateButton.states = [["Sample Rate", Color.black, Color.white]];
-		sampleRateButton.action = { "open -a 'Audio MIDI Setup'".unixCmd; };
-	});
+        sampleRateButton = Button(mainWindow, Rect(1100, 10, 120, 25));
+        sampleRateButton.states = [["Sample Rate", Color.black, Color.white]];
+        sampleRateButton.action = { "open -a 'Audio MIDI Setup'".unixCmd; };
+    });
 
 
     serverWinButton = Button(mainWindow, Rect(640, 10, 120, 25));
@@ -690,21 +688,20 @@ cfgMgr.addSample = ~addSample;
     view = FlowView(mainWindow, Rect(777, 77, 450, 67), margin: 3@5);
     view.background = Color.grey;
 
-	{
-		var txt = StaticText.new(view, 285@25);
-		txt.string = "Select sample VVV  select synth >>";
-		txt.stringColor = Color.white;
-	}.value();
+    {
+        var txt = StaticText.new(view, 285@25);
+        txt.string = "Select sample VVV  select synth >>";
+        txt.stringColor = Color.white;
+    }.value();
 
-
-    gui.synthSelection = PopUpMenu(view, 150@25);
-    gui.synthSelection.items = synthLookup.collect { |a| a[1] }.repeatItems(3);
-    gui.synthSelection.value = 0;
-    gui.synthSelection.action = { |button|
-        ~runOnAppClock.value({
-            gui.synthType = (button.value / 3).asInteger;
-        })
+    gui.synthSelection             = PopUpMenu(view, 150@25);
+    gui.synthSelection.items       = synthLookup.collect { |a| a[1] };
+    gui.synthSelection.value       = 0;
+    gui.synthType                  = 0;
+    gui.synthSelection.action      = { |button|
+        gui.synthType = button.value.asInteger;
     };
+    gui.bb["synthSelectorCounter"] = RcGuiCounter.new(0,3);
 
     view.startRow;
     gui.sampleSelector = PopUpMenu(view, 440@25);
@@ -718,6 +715,7 @@ cfgMgr.addSample = ~addSample;
             ~noteOn.value(nil,nil, gui.sampleSelector.items.size.rand, 0);
         });
     };
+    gui.bb["sampleSelectorCounter"] = RcGuiCounter.new(0,2);
 
     // pendulum settings
     view = FlowView(mainWindow, Rect(10, 112, 750, 32), margin: 3@3);
@@ -728,10 +726,11 @@ cfgMgr.addSample = ~addSample;
     gui.pendulumSelection.action = { |button|
         pendSettings.klzPendulum = pendulumClaess[button.value][1];
     };
+    gui.bb["pendulumSelectorCounter"] = RcGuiCounter.new(0,3);
 
-    ~psBut = { |name, initVal|
+    ~psBut = { |name, initVal=0, minValue=0|
         EZKnob(view, 180@24, name,
-            ControlSpec.new(minval: 0, maxval: 59,
+            ControlSpec.new(minval: minValue, maxval: 59,
                 warp: 'lin', step: 0.1, default: initVal, units: "secs"),
             unitWidth: 0, initVal: initVal, layout:\horz, labelWidth: 80)
         .setColors(Color.grey,Color.white)
@@ -739,7 +738,7 @@ cfgMgr.addSample = ~addSample;
     };
 
     pendSettings.dials.start    = ~psBut.value( "Start", 0 );
-    pendSettings.dials.duration = ~psBut.value( "Duration", 0 );
+    pendSettings.dials.duration = ~psBut.value( "Duration", 1, 0.1 );
     pendSettings.dials.end      = ~psBut.value( "End", 0 );
 
     // dial settings
@@ -837,18 +836,18 @@ cfgMgr.addSample = ~addSample;
                         paddef.typeText.items = synthLookup.collect {|a| a[1] };
                         paddef.typeText.value = 0;
                         paddef.typeText.action = { |new_value|
-							var synthDef = synthLookup.reject { |a|
-								a[1] != new_value.items[new_value.value]
-							}.first;
+                            var synthDef = synthLookup.reject { |a|
+                                a[1] != new_value.items[new_value.value]
+                            }.first;
 
-							paddef.synth.getn(0, RcSynthDef.argCount, { |args|
-								paddef.synthUpdate( Synth.replace(
-									paddef.synth,
-									synthDef.first,
-									RcSynthDef.argsToArgs(args),
-									sameID: true)
+                            paddef.synth.getn(0, RcSynthDef.argCount, { |args|
+                                paddef.synthUpdate( Synth.replace(
+                                    paddef.synth,
+                                    synthDef.first,
+                                    RcSynthDef.argsToArgs(args),
+                                    sameID: true)
                                 );
-							});
+                            });
                         }
                     },
                     {
@@ -1011,30 +1010,30 @@ cfgMgr.addSample = ~addSample;
 // Dial values for all samples is set to the server and also the
 // location in the sample.
 {
-	var cb = CheckBox.new( mainWindow, Rect(1250, 1110, 180, 25),
-		"Send OSC to: ");
-	var textField = EZText(mainWindow, Rect(1380, 1110, 210, 25), nil,
-		initVal: "192.168.178.53:12345",
-		labelWidth: 0, layout: \horz, margin: 2@3).
-	setColors(Color.black, Color.white, textBackground: Color.white);
+    var cb = CheckBox.new( mainWindow, Rect(1250, 1110, 180, 25),
+        "Send OSC to: ");
+    var textField = EZText(mainWindow, Rect(1380, 1110, 210, 25), nil,
+        initVal: "192.168.178.53:12345",
+        labelWidth: 0, layout: \horz, margin: 2@3).
+    setColors(Color.black, Color.white, textBackground: Color.white);
 
-	cb.value = false;
-	cb.action = { |checkbox|
-		var hostPort = textField.value.split($:);
+    cb.value = false;
+    cb.action = { |checkbox|
+        var hostPort = textField.value.split($:);
 
-		if ( checkbox.value, {
-			var darkPlace = NetAddr(hostPort[0], hostPort[1].asInteger);
+        if ( checkbox.value, {
+            var darkPlace = NetAddr(hostPort[0], hostPort[1].asInteger);
 
-			rcRecorder.oscEndpoint = darkPlace;
+            rcRecorder.oscEndpoint = darkPlace;
 
-			SystemClock.sched(0.05, {
-				try { gui.asOSC(darkPlace); } {};
-				if ( rcRecorder.oscEndpoint.notNil, 0.05, nil );
-			});
-		}, {
-			rcRecorder.oscEndpoint = nil;
-		});
-	};
+            SystemClock.sched(0.05, {
+                try { gui.asOSC(darkPlace); } {};
+                if ( rcRecorder.oscEndpoint.notNil, 0.05, nil );
+            });
+        }, {
+            rcRecorder.oscEndpoint = nil;
+        });
+    };
 }.value();
 
 // load presets if they exist.

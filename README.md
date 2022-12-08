@@ -74,13 +74,12 @@ Or on Linux:
 ln -s /bin/sclang
 ```
 
-
 Install the [PortedPlugins](https://github.com/madskjeldgaard/portedplugins) from the assets directory:
 
 On MacOS:
 
 ```
-mkdir plugins && cd plugins && unzip ../assets/PortedPlugins-macos.zip && cd ..
+unzip assets/PortedPlugins-macos.zip -d "$(make extensions-folder)"
 ```
 
 On Linux:
