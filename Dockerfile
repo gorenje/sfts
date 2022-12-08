@@ -38,7 +38,9 @@ COPY --chown=${NB_USER} assets/configs/ .sfts/
 COPY --chown=${NB_USER} assets/samples/ samples/
 
 COPY --chown=${NB_USER} assets/PortedPlugins-Linux.zip .
-RUN unzip /home/${NB_USER}/PortedPlugins-Linux.zip -d extensions
+RUN mkdir -p /home/${NB_USER}/.local/share/SuperCollider/Extensions && \
+  cd /home/${NB_USER}/.local/share/SuperCollider/Extensions && \
+  unzip /home/${NB_USER}/PortedPlugins-Linux.zip
 
 COPY --chown=${NB_USER} Makefile .
 COPY --chown=${NB_USER} gui.scd .
