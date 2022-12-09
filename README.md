@@ -10,6 +10,8 @@ You mileage my vary however what I have found is that since I recorded the sampl
 
 I am also fascinated by how simple sounds can be morphed into deeper, stranger sounds. A chicken sounds as it were a dog when slowed down, a wine glass as a church bell or birds sound the same played forward or backward. The combination of the morphed and alternated becomes the soundscape.
 
+It has become a specific loop machine, but something that I developed to match my purpose. The freedom to reinvent the loop machine is the reason we have so many different loop machines.
+
 ## How does it work?
 
 Loopable samples are played endless and mutated while they play. Controlled by a Midi controller, currently that is an [Arturia MiniLab MK II](https://www.arturia.com/products/hybrid-synths/minilab-mkii/overview) with a specific [layout](/assets/sfts-arturia-layout.minilabmk2).
@@ -47,6 +49,23 @@ What does this all do:
     All notes are shown here. They can be moved to the samples area with a left click on the number-label or removed with a right click on the number label.
 
 Top left hand corner is the `Load Scape` button for loading a scape, this is a good place to begin to have something playing.
+
+### Loading a Scape
+
+After loading a scape, in this case [scape.221121_144649.yaml](/assets/configs/scape.221121_144649.yaml), the player shows the samples:
+
+<img src="/assets/screen-load-scape.png"/>
+
+Some highlights of what is going on:
+
+<img src="/assets/screen-load-scape-highlights.png"/>
+
+- Marked with a green star is the load scape button. Some predefined scapes come with the application and can be modified. Changes can be saved with the `Save Scape` button.
+- The red rectangles are indicating the that the eight dials for each sample are the same effects as shown at the top. Each effect is applied separately to each sample that is playing. The effects are: volume, pan, speed, reverb, frequency, damp, mix, front-back location.
+- The dials marked with the blue hexagon are pendulum dials. Pendulum is the term I came up with to describe patterns that move dials automatically. There are a number of a pendulums: record, timer, randomise, and a couple more. They can only be sensibly configured using a midi controller. Pendulums are simply predefined values for a dial over a time period. For example, a timer will move a dial between two values over a specific duration, simply back and forth.
+- The black arrows point to the synth drop down for each playing sample. Changing the synth is probably the simplest change that can be made to a sample.
+
+A new sample can be selected via the `Sample Selector`, a sample first appears as a note in `Notes Playing` area. By clicking on it, it will be moved to the samples area. The volume is set to zero by default, so to hear a sample, the volume dial for the sample needs uplifting - volume dial is top, left dial for each sample.
 
 ## Setup
 
