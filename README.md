@@ -1,4 +1,4 @@
-# Sounds from the Scape
+#  <img width="64" src="/assets/logo.png"/> Sounds from the Scape 
 
 Soundscape generated written in [SuperCollider](https://supercollider.github.io/).
 
@@ -153,6 +153,11 @@ The app is available under [releases](https://github.com/gorenje/sfts/releases).
 ## What does it sound like?
 
 A collection of samples soundscapes on [SoundCloud](https://soundcloud.com/user-47380021).
+
+## What is a Soundscape?
+
+> A soundscape is a term used to describe the acoustic environment of a particular place or space. It refers to the combination of all the sounds that are present in that environment, including natural sounds like birds singing or the wind blowing, as well as human-made sounds like traffic or people talking. The term was coined by the composer and acoustic ecologist R. Murray Schafer in the 1970s, and it is often used to describe the ways in which sounds interact with each other and with the environment to create a unique acoustic experience. Soundscapes can be natural, urban, or even imaginary, and they can have a profound impact on our perception of a place and our overall well-being. - ChatGPT *What is a soundscape?*
+
 
 ## What is the hardest thing to do?
 
