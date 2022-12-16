@@ -41,7 +41,7 @@ RcRecorder {
             AppClock.sched(0, {
                 guiButton.states = [
                     btnStates[0],
-                    [format("Rec %:%:%",
+                    [format("Stop %:%:%",
                         hrs.asInteger.asString.padLeft(2,"0"),
                         mins.asInteger.asString.padLeft(2,"0"),
                         secs.asInteger.asString.padLeft(2,"0")),
