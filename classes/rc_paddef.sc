@@ -48,6 +48,8 @@ RcPadDef {
     var <>ranger;
     var <>samplePos;
     var <>plotter;
+    var <>midiBusListener;
+    var <>linkMidi;
 
     *new { |main_view, comment_view, rowNum, colNum|
         ^super.new.init(main_view, comment_view, rowNum, colNum);
@@ -64,6 +66,8 @@ RcPadDef {
     }
 
     init { |mView, cView, rowNum, colNum|
+        var self = this;
+
         knobs       = List.new();
         pendulums   = List.new();
         commentText = cView;
@@ -74,6 +78,25 @@ RcPadDef {
         padIdx      = (rowNum * 4) + colNum;
 
         mainView.background = nil;
+
+        midiBusListener = { |tstamp, src, chan, num, val|
+            if ( (num < 9) && (val != 64), {
+                var newval = self.knobs[num-1].value;
+
+                newval = newval + (val - 64);
+
+                if ( newval < 0, { newval = 0 });
+                if ( newval > 127, { newval = 127 });
+
+                if ( self.synth.notNil, {
+                    self.synth.set(["arg",num-1].join, newval);
+                });
+
+                ~runOnAppClock.value({
+                    self.knobs[num-1].value = newval;
+                });
+            });
+        };
     }
 
     setup { |values, noteText, synthType|
@@ -82,6 +105,9 @@ RcPadDef {
         commentText.setColors(textBackground: Color.new(1,0.7,0.7));
         mainView.background = myColour;
         typeText.value_(typeText.items.indexOfEqual(synthType));
+        AppClock.sched(1.3, {
+            linkMidi.enabled_(true);
+        });
     }
 
     knobIdx { |srchKnb|
@@ -132,6 +158,10 @@ RcPadDef {
         typeText.value_(0);
         synth = nil;
         knobs.do { |k| k.value = 0 };
+        AppClock.sched(0.4, {
+            linkMidi.valueAction = false;
+            linkMidi.enabled_(false);
+        });
         AppClock.sched(1.3, {
             ranger.value = 0.0;
         });
