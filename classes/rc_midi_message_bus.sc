@@ -6,7 +6,7 @@ RcMidiMessageBus {
     }
 
     init {
-        listeners = FunctionList.new;
+        listeners = FunctionList.new([]);
     }
 
     push { |msg|
