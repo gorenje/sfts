@@ -18,6 +18,6 @@ RcMidiMessageBus {
     }
 
     remove_listener { |f|
-        listeners.removeFunc(f)
+        listeners.removeAllOccurances(f)
     }
 }
