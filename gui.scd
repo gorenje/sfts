@@ -674,23 +674,26 @@ cfgMgr.addSample = ~addSample;
         }, {}, fileMode: 3, stripResult: false);
     };
 
-    // title for the config
-    gui.titleField = EZText(
-        mainWindow, Rect(777, 40, 450, 25), "title",
-        initVal: nil, labelWidth: 40, layout: \horz
-    )
-    .setColors(Color.white, Color.black, textBackground: Color.white)
-    .enabled_(true)
-    .visible_(true);
+    view = FlowView(mainWindow, Rect(777, 40, 450, 67), margin: 3@5);
+    view.background = Color.grey;
 
+    // title for the config
+    gui.titleField = EZText( view, 440@50, "Scape Title",
+        initVal: nil, labelWidth: 40, layout: \vert
+    )
+    .setColors(Color.white, Color.black,
+        textBackground: Color.white,
+        stringBackground: Color.grey,
+        stringColor: Color.white
+    ).enabled_(true).visible_(true);
 
     // sample selector and synth type selector
-    view = FlowView(mainWindow, Rect(777, 77, 450, 67), margin: 3@5);
+    view = FlowView(mainWindow, Rect(777, 112, 450, 67), margin: 3@5);
     view.background = Color.grey;
 
     {
         var txt = StaticText.new(view, 285@25);
-        txt.string = "Select sample VVV  select synth >>";
+        txt.string = "Sample and Synth Selectors";
         txt.stringColor = Color.white;
     }.value();
 
@@ -718,9 +721,16 @@ cfgMgr.addSample = ~addSample;
     gui.bb["sampleSelectorCounter"] = RcGuiCounter.new(0,2);
 
     // pendulum settings
-    view = FlowView(mainWindow, Rect(10, 112, 750, 32), margin: 3@3);
+    view = FlowView(mainWindow, Rect(10, 112, 750, 67), margin: 3@3);
     view.background = Color.grey;
 
+    {
+        var txt = StaticText.new(view, 285@25);
+        txt.string = "Pendulum selector and settings";
+        txt.stringColor = Color.white;
+    }.value();
+
+    view.startRow;
     gui.pendulumSelection = PopUpMenu(view, 180@24);
     gui.pendulumSelection.items = pendulumClaess.collect { |a| a[0] };
     gui.pendulumSelection.action = { |button|
@@ -762,18 +772,49 @@ cfgMgr.addSample = ~addSample;
     };
 }.value();
 
-
 // list of frozen samples
 {
-    var view2 = FlowView(mainWindow, Rect(10, 160, 1220, 700));
+    var view2 = FlowView(mainWindow, Rect(10, 230, 1240, 680));
     // view2.background = Color.grey;
 
     // this defines the 16 pads, 4 rows of 4 pads.
     4.do { |idx|
         view2.startRow;
 
-        // there is a gap between the top 2 rows and the bottom 2 rows.
-        if ( idx == 2, { 8.do { view2.startRow } } );
+        // add a gap between the top 2 rows and the bottom 2 rows.
+        if ( idx == 2, {
+
+            // midi linking controls
+            var view = nil;
+
+            FlowView( view2, Rect(10,10, 450,30));
+            view = FlowView(view2, Rect(10, 200, 300, 30), margin: 3@3);
+            view.background = Color.grey;
+
+            {
+                var txt = StaticText.new(view, 250@25);
+                txt.string = "Link Midi Dials. All/None & Toggle: ";
+                txt.stringColor = Color.white;
+            }.value();
+
+            {
+                CheckBox.new( view, 15@15, "").action = { |cbx|
+                    gui.pads.do { |paddef|
+                        if ( paddef.linkMidi.enabled, {
+                            paddef.linkMidi.valueAction = cbx.value;
+                        });
+                    };
+                };
+                CheckBox.new( view, 15@15, "").action = { |cbx|
+                    gui.pads.do { |paddef|
+                        if ( paddef.linkMidi.enabled, {
+                            paddef.linkMidi.valueAction = paddef.linkMidi.value.not;
+                        });
+                    };
+                };
+            }.value();
+            view2.startRow;
+        });
 
         4.do { |ridx|
             var view = FlowView(view2, Rect(100, 100, 300, 150));
@@ -808,13 +849,12 @@ cfgMgr.addSample = ~addSample;
             gui.pads.add(paddef);
 
             // this defines the eight dials, 2 rows of 4.
-            2.do { |cidx|
+            2.do { |kridx|
                 view.startRow;
 
-                4.do { |kjdx|
-
+                4.do { |kcidx|
                     var knob_action = { |knob|
-                        var argidx = (cidx * 4) + kjdx;
+                        var argidx = (kridx * 4) + kcidx;
                         if ( paddef.synth.notNil, {
                             paddef.synth.set(["arg",argidx].join, knob.value)
                         });
@@ -830,7 +870,9 @@ cfgMgr.addSample = ~addSample;
                     paddef.knobs.add(knob);
                 };
 
-                if ( cidx == 0,
+                // first row or second row? second row has checkbox and first
+                // row just synth drop down
+                if ( kridx == 0,
                     {
                         paddef.typeText = PopUpMenu(view, 150@20);
                         paddef.typeText.items = synthLookup.collect {|a| a[1] };
@@ -851,7 +893,20 @@ cfgMgr.addSample = ~addSample;
                         }
                     },
                     {
-                        paddef.fileText = EZText(view, 150@20, nil,
+                        paddef.linkMidi = CheckBox.new( view, 20@20, "");
+                        paddef.linkMidi.value = false;
+                        paddef.linkMidi.enabled = false;
+                        paddef.linkMidi.action = { |checkbox|
+                            if ( checkbox.value, {
+                                checkbox.setBgColor(Color.red);
+                                midiBus.add_listener(paddef.midiBusListener);
+                            }, {
+                                checkbox.setBgColor(Color.white);
+                                midiBus.remove_listener(paddef.midiBusListener);
+                            });
+                        };
+
+                        paddef.fileText = EZText(view, 130@20, nil,
                             initVal: nil,
                             labelWidth: 0,
                             layout: \horz).
@@ -891,9 +946,54 @@ cfgMgr.addSample = ~addSample;
                     });
                 });
             }, '/pos');
-
         };
-    }
+        {
+            var view3 = FlowView(view2, 20@150);
+
+            13.do { view3.startRow };
+
+            CheckBox.new( view3, 15@15, "").action = { |cbx|
+                Range( (idx*4), 4 ).do { |padidx|
+                    if ( gui.pads[padidx].linkMidi.enabled, {
+                        gui.pads[padidx].linkMidi.valueAction = cbx.value;
+                    });
+                };
+            };
+
+            view3.startRow;
+
+            CheckBox.new( view3, 15@15, "").action = { |cbx|
+                Range( (idx*4), 4 ).do { |padidx|
+                    if ( gui.pads[padidx].linkMidi.enabled, {
+                        gui.pads[padidx].linkMidi.valueAction = gui.pads[padidx].linkMidi.value.not;
+                    });
+                };
+            };
+        }.value();
+    };
+    view2.startRow;
+
+    // link midi dials checkboxs by columns
+    4.do { |cidx|
+        var v = FlowView.new( view2, 300@20);
+
+        FlowView.new( v, 120@20 );
+
+        CheckBox.new( v, 15@15, "").action = { |cbx|
+            Interval(cidx, 15, 4).do { |padidx|
+                if ( gui.pads[padidx].linkMidi.enabled, {
+                    gui.pads[padidx].linkMidi.valueAction = cbx.value;
+                });
+            };
+        };
+        CheckBox.new( v, 15@15, "").action = { |cbx|
+            Interval(cidx, 15, 4).do { |padidx|
+                if ( gui.pads[padidx].linkMidi.enabled, {
+                    gui.pads[padidx].linkMidi.valueAction = gui.pads[padidx].linkMidi.value.not;
+                });
+            };
+        };
+    };
 }.value();
 
 // setup presets info
@@ -1025,12 +1125,14 @@ cfgMgr.addSample = ~addSample;
             var darkPlace = NetAddr(hostPort[0], hostPort[1].asInteger);
 
             rcRecorder.oscEndpoint = darkPlace;
+            checkbox.setBgColor(Color.red);
 
             SystemClock.sched(0.05, {
                 try { gui.asOSC(darkPlace); } {};
                 if ( rcRecorder.oscEndpoint.notNil, 0.05, nil );
             });
         }, {
+            checkbox.setBgColor(Color.white);
             rcRecorder.oscEndpoint = nil;
         });
     };
