@@ -26,6 +26,20 @@ RcSynthDef {
         ];
     }
 
+    *addInitVals { |initVals|
+        var initArgs = List.new;
+
+        if ( if ( initVals.notNil, { initVals.notEmpty }, { false } ), {
+            7.do { |idx|
+                initArgs.add("arg" ++ (idx+1)).add( initVals[idx+1] );
+            };
+        }, {
+            initArgs.add( "arg1" ).add( 64 );
+        });
+
+        ^initArgs;
+    }
+
     def01 { |synth_name|
         // play samples
         SynthDef.new(synth_name, { |arg0=32,  arg1=64, arg2=32, arg3=64,

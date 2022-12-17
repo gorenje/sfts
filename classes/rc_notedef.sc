@@ -13,12 +13,8 @@ RcNoteDef {
     }
 
     init { |ez_text|
-        ezText   = ez_text;
-        synth    = nil;
-        isFree   = true;
-        noteNum  = nil;
-        buffer   = nil;
-        filename = nil;
+        ezText = ez_text;
+        this.clear_();
     }
 
     show { |labelString, textValue, synth|
@@ -32,12 +28,7 @@ RcNoteDef {
 
     hide {
         ezText.visible_(false);
-        synth      = nil;
-        isFree     = true;
-        noteNum    = nil;
-        filename   = nil;
-        presetData = nil;
-        buffer     = nil;
+        this.clear_();
     }
 
     hideAndRelease {
@@ -58,5 +49,14 @@ RcNoteDef {
 
     text {
         ^ezText.value;
+    }
+
+    clear_ {
+        synth      = nil;
+        isFree     = true;
+        buffer     = nil;
+        noteNum    = nil;
+        filename   = nil;
+        presetData = nil;
     }
 }

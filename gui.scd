@@ -148,7 +148,7 @@ SystemClock.sched(1.0, {
                 (0..7).do { |idx| gui.knobs[idx].value = ary[idx]; };
             });
         });
-    }, { (0..7).do { |idx| gui.knobs[idx].value = 0; }; });
+    }, { (0..7).do { |idx| gui.knobs[idx].value = 0; }; } );
 };
 
 ~playSample = { |num,vel,initVals|
@@ -161,24 +161,15 @@ SystemClock.sched(1.0, {
         var synthType = gui.synthType;
 
         var action = { |buffer|
-            var initArgs  = List.newUsing([
+            var initArgs  = [
                 "num",       num,
                 "vel",       vel,
                 "bufnum",    buffer.bufnum,
                 "sampleIdx", sampleIdx,
                 "arg0",      vel,
-            ]);
+            ] ++ RcSynthDef.addInitVals(initVals);
 
-            if ( if ( initVals.notNil, { initVals.notEmpty }, { false } ), {
-                7.do { |idx|
-                    initArgs.add("arg" ++ (idx+1)).add( initVals[idx+1] );
-                };
-            }, {
-                initArgs.add( "arg1" ).add( 64 );
-            });
-
-            note.synth     = Synth.new(synthLookup[synthType].first,
-                                       initArgs.asArray);
+            note.synth     = Synth.new(synthLookup[synthType].first, initArgs);
             note.filename  = filename;
             note.synthType = synthLookup[synthType][1];
             note.buffer    = buffer;
@@ -199,22 +190,15 @@ SystemClock.sched(1.0, {
 ~playSinOsc = { |num,vel,initVals|
     var note = gui.obtainNote;
     if (note.notNil, {
-        var initArgs = List.newUsing([
-            "num",    num,
-            "vel",    vel,
-            "bufnum", nil,
-            "arg0",   vel,
-        ]);
+        var initArgs = [
+            "num",       num,
+            "vel",       vel,
+            "bufnum",    nil,
+            "sampleIdx", nil,
+            "arg0",      vel,
+        ] ++ RcSynthDef.addInitVals(initVals);
 
-        if ( if ( initVals.notNil, { initVals.notEmpty }, { false } ), {
-            7.do {|idx| initArgs.add("arg" ++ (idx+1)).add( initVals[idx+1] );};
-        }, {
-            initArgs.add( "arg1" ).add( 64 );
-        });
-
-        note.synth = Synth.new(synthLookup[gui.synthType].first,
-            initArgs.asArray);
-
+        note.synth     = Synth.new(synthLookup[gui.synthType].first, initArgs);
         note.synthType = synthLookup[gui.synthType][1];
 
         ~runOnAppClock.value({
@@ -235,9 +219,7 @@ gui.allSamples  = allSamples;
     if ( (num > 19) && (num < 36), {
         var idx,ref;
         if ( val == 0, {
-            ~runOnAppClock.value({
-                gui.releasePadByMidiControlNum(num);
-            });
+            { gui.releasePadByMidiControlNum(num); }.defer;
         }, {
             // freeze and keep.
             // first ensure that the pad isn't already taken, then find the
@@ -411,14 +393,13 @@ gui.allSamples  = allSamples;
             if (  val > 64, {
                 if ( gui.pendulumSelection.value != (gui.pendulumSelection.items.size-1), {
                     gui.pendulumSelection.value = (gui.pendulumSelection.value + 1).min(gui.pendulumSelection.items.size-1);
-                    gui.pendulumSelection.valueAction_(gui.pendulumSelection.value);
                 });
             }, {
                 if ( gui.pendulumSelection.value != 0, {
                     gui.pendulumSelection.value = 0.max(gui.pendulumSelection.value - 1);
-                    gui.pendulumSelection.valueAction_(gui.pendulumSelection.value);
                 });
             });
+            gui.pendulumSelection.valueAction_(gui.pendulumSelection.value);
         });
     });
 };
@@ -453,26 +434,20 @@ gui.allSamples  = allSamples;
             if ( val > 64, {
                 if ( gui.synthSelection.value != (gui.synthSelection.items.size-1), {
                     gui.synthSelection.value = (gui.synthSelection.value + 1).min(gui.synthSelection.items.size-1);
-                    gui.synthSelection.valueAction_(gui.synthSelection.value);
                 });
             }, {
                 if ( gui.synthSelection.value != 0, {
                     gui.synthSelection.value = 0.max(gui.synthSelection.value - 1);
-                    gui.synthSelection.valueAction_(gui.synthSelection.value);
                 });
             });
+            gui.synthSelection.valueAction_(gui.synthSelection.value);
         });
     });
-};
-
-~midiBusFiller = { |src, chan, num, val|
-    midiBus.push( [src, chan, num, val] )
 };
 
 MIDIIn.addFuncTo(\noteOff, ~noteOff);
 MIDIIn.addFuncTo(\noteOn,  ~noteOn);
 
-MIDIIn.addFuncTo(\control, ~midiBusFiller);
 MIDIIn.addFuncTo(\control, ~controlSetSynthValue);
 MIDIIn.addFuncTo(\control, ~midiStartRecord);
 MIDIIn.addFuncTo(\control, ~midiSelectActivePad);
@@ -488,8 +463,12 @@ MIDIIn.addFuncTo(\control, ~midiSynthSelector);
 MIDIIn.addFuncTo(\control, ~midiGlobalVolume);
 
 MIDIIn.addFuncTo(\control, { |src, chan, num, val|
+    midiBus.push( [src, chan, num, val] )
+});
+
+MIDIIn.addFuncTo(\control, { |src, chan, num, val|
     if ( num == 64, {
-        // this sets the preset channel - in this case 32 presets channles,
+        // this sets the preset channel - in this case 32 presets channels,
         // each with 9 notes.
         ~runOnAppClock.value({
             randomBlackBoard.add("currChannel" -> [0,31,\lin].asSpec.map(
