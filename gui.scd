@@ -9,9 +9,11 @@ var noteRemapPresets = Dictionary.new;
 var optsDir          = Platform.userHomeDir ++ "/.sfts";
 var presetsFile      = optsDir ++ "/presets.yaml";
 
-var mainWindow       = Window("Sound <---- Scape",
+var mainWindow       = Window(
+    "Sound <---- Scape",
     bounds: Rect(0,0,1810,1150),
-    resizable: false).front;
+    resizable: false
+).front;
 
 var gui;
 var midiBus;
@@ -315,12 +317,7 @@ gui.allSamples  = allSamples;
     if ( (num < 9) && (val != 64), {
         var synth = gui.currentSynth;
 
-        var newval = gui.currentDial(num-1).value;
-
-        newval = newval + (val - 64);
-
-        if ( newval < 0, { newval = 0 });
-        if ( newval > 127, { newval = 127 });
+        var newval = (gui.currentDial(num-1).value + (val - 64)).asInteger.clampTo(0,127);
 
         if ( synth.notNil, { synth.set(["arg",num-1].join, newval); });
 
@@ -361,11 +358,7 @@ gui.allSamples  = allSamples;
 ~midiSampleSelector = { |src, chan, num, val|
     if ( (num == 9) && (val != 64), {
         gui.bb["sampleSelectorCounter"].willSomethingChange(val, { |val|
-            if ( val > 64, {
-                gui.sampleSelector.value = (gui.sampleSelector.value + 1).min(gui.sampleSelector.items.size-1);
-            }, {
-                gui.sampleSelector.value = 0.max(gui.sampleSelector.value - 1);
-            });
+            RcHelpers.drpdwnSetValue(val,gui.sampleSelector,false);
         });
     });
 };
@@ -390,16 +383,7 @@ gui.allSamples  = allSamples;
 ~midiPendulumSelector = { |src, chan, num, val|
     if ( (num == 11) && (val != 64), {
         gui.bb["pendulumSelectorCounter"].willSomethingChange(val, { |val|
-            if (  val > 64, {
-                if ( gui.pendulumSelection.value != (gui.pendulumSelection.items.size-1), {
-                    gui.pendulumSelection.value = (gui.pendulumSelection.value + 1).min(gui.pendulumSelection.items.size-1);
-                });
-            }, {
-                if ( gui.pendulumSelection.value != 0, {
-                    gui.pendulumSelection.value = 0.max(gui.pendulumSelection.value - 1);
-                });
-            });
-            gui.pendulumSelection.valueAction_(gui.pendulumSelection.value);
+            RcHelpers.drpdwnSetValue(val, gui.pendulumSelection);
         });
     });
 };
@@ -431,16 +415,7 @@ gui.allSamples  = allSamples;
 ~midiSynthSelector = { |src, chan, num, val|
     if ( (num == 14) && (val != 64), {
         gui.bb["synthSelectorCounter"].willSomethingChange(val, { |val|
-            if ( val > 64, {
-                if ( gui.synthSelection.value != (gui.synthSelection.items.size-1), {
-                    gui.synthSelection.value = (gui.synthSelection.value + 1).min(gui.synthSelection.items.size-1);
-                });
-            }, {
-                if ( gui.synthSelection.value != 0, {
-                    gui.synthSelection.value = 0.max(gui.synthSelection.value - 1);
-                });
-            });
-            gui.synthSelection.valueAction_(gui.synthSelection.value);
+            RcHelpers.drpdwnSetValue(val, gui.synthSelection);
         });
     });
 };
@@ -670,11 +645,7 @@ cfgMgr.addSample = ~addSample;
     view = FlowView(mainWindow, Rect(777, 112, 450, 67), margin: 3@5);
     view.background = Color.grey;
 
-    {
-        var txt = StaticText.new(view, 285@25);
-        txt.string = "Sample and Synth Selectors";
-        txt.stringColor = Color.white;
-    }.value();
+    RcHelpers.addStaticText(view, "Sample and Synth Selectors");
 
     gui.synthSelection             = PopUpMenu(view, 150@25);
     gui.synthSelection.items       = synthLookup.collect { |a| a[1] };
@@ -703,11 +674,7 @@ cfgMgr.addSample = ~addSample;
     view = FlowView(mainWindow, Rect(10, 112, 750, 67), margin: 3@3);
     view.background = Color.grey;
 
-    {
-        var txt = StaticText.new(view, 285@25);
-        txt.string = "Pendulum selector and settings";
-        txt.stringColor = Color.white;
-    }.value();
+    RcHelpers.addStaticText(view,"Pendulum selector and settings");
 
     view.startRow;
     gui.pendulumSelection = PopUpMenu(view, 180@24);
@@ -770,28 +737,19 @@ cfgMgr.addSample = ~addSample;
             view = FlowView(view2, Rect(10, 200, 300, 30), margin: 3@3);
             view.background = Color.grey;
 
-            {
-                var txt = StaticText.new(view, 250@25);
-                txt.string = "Link Midi Dials. All/None & Toggle: ";
-                txt.stringColor = Color.white;
-            }.value();
+            RcHelpers.addStaticText(view,"Link Midi Dials. All/None & Toggle:");
 
-            {
-                CheckBox.new( view, 15@15, "").action = { |cbx|
-                    gui.pads.do { |paddef|
-                        if ( paddef.linkMidi.enabled, {
-                            paddef.linkMidi.valueAction = cbx.value;
-                        });
-                    };
+            CheckBox.new( view, 15@15, "").action = { |cbx|
+                gui.pads.do { |paddef|
+                    RcHelpers.setValueIfEnabled(paddef.linkMidi,cbx);
                 };
-                CheckBox.new( view, 15@15, "").action = { |cbx|
-                    gui.pads.do { |paddef|
-                        if ( paddef.linkMidi.enabled, {
-                            paddef.linkMidi.valueAction = paddef.linkMidi.value.not;
-                        });
-                    };
+            };
+            CheckBox.new( view, 15@15, "").action = { |cbx|
+                gui.pads.do { |paddef|
+                    RcHelpers.toggleValueIfEnabled(paddef.linkMidi);
                 };
-            }.value();
+            };
+
             view2.startRow;
         });
 
@@ -920,9 +878,7 @@ cfgMgr.addSample = ~addSample;
             OSCFunc.new( { |msg|
                 if ( msg[3].asInteger == paddef.midiPadNum, {
                     paddef.samplePos = msg[4];
-                    ~runOnAppClock.value({
-                        paddef.ranger.value = msg[4];
-                    });
+                    { paddef.ranger.value = msg[4]; }.defer;
                 });
             }, '/pos');
         };
@@ -933,9 +889,7 @@ cfgMgr.addSample = ~addSample;
 
             CheckBox.new( view3, 15@15, "").action = { |cbx|
                 Range( (idx*4), 4 ).do { |padidx|
-                    if ( gui.pads[padidx].linkMidi.enabled, {
-                        gui.pads[padidx].linkMidi.valueAction = cbx.value;
-                    });
+                    RcHelpers.setValueIfEnabled(gui.pads[padidx].linkMidi,cbx);
                 };
             };
 
@@ -943,9 +897,7 @@ cfgMgr.addSample = ~addSample;
 
             CheckBox.new( view3, 15@15, "").action = { |cbx|
                 Range( (idx*4), 4 ).do { |padidx|
-                    if ( gui.pads[padidx].linkMidi.enabled, {
-                        gui.pads[padidx].linkMidi.valueAction = gui.pads[padidx].linkMidi.value.not;
-                    });
+                    RcHelpers.toggleValueIfEnabled(gui.pads[padidx].linkMidi);
                 };
             };
         }.value();
@@ -960,16 +912,12 @@ cfgMgr.addSample = ~addSample;
 
         CheckBox.new( v, 15@15, "").action = { |cbx|
             Interval(cidx, 15, 4).do { |padidx|
-                if ( gui.pads[padidx].linkMidi.enabled, {
-                    gui.pads[padidx].linkMidi.valueAction = cbx.value;
-                });
+                RcHelpers.setValueIfEnabled(gui.pads[padidx].linkMidi,cbx);
             };
         };
         CheckBox.new( v, 15@15, "").action = { |cbx|
             Interval(cidx, 15, 4).do { |padidx|
-                if ( gui.pads[padidx].linkMidi.enabled, {
-                    gui.pads[padidx].linkMidi.valueAction = gui.pads[padidx].linkMidi.value.not;
-                });
+                RcHelpers.toggleValueIfEnabled(gui.pads[padidx].linkMidi);
             };
         };
     };
@@ -1037,7 +985,6 @@ cfgMgr.addSample = ~addSample;
 
     RcPresets.setupGui( mainWindow, noteRemapPresets, allSamples,
         ~addSample, presetsFile, randomBlackBoard);
-
 }.value();
 
 // list of notes being played
