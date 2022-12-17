@@ -127,14 +127,14 @@ RcPendulumBase {
     }
 
     setPrepareColour_ {
-        AppClock.sched(0, {
+        {
             this.dial.setColors( knobColors: [
                 Color(0.8,0.4,0.2),
                 Color(),
                 Color(0.85882352941176, 0.85882352941176, 0.85882352941176),
                 Color()
             ])
-        });
+        }.defer;
     }
 
     setLoopColour_ { |knobColors = nil|
@@ -147,9 +147,7 @@ RcPendulumBase {
             ];
         });
 
-        AppClock.sched(0, {
-            this.dial.setColors( knobColors: knobColors)
-        });
+        { this.dial.setColors( knobColors: knobColors) }.defer;
     }
 
     asYaml { |pendId|
@@ -202,10 +200,7 @@ RcPendulumRandomise : RcPendulumBase {
                 if ( this.stopNow, { nil }, {
                     this.synth.set(["arg",this.argNum-1].join, newval);
 
-                    AppClock.sched(0, {
-                        this.dial.value = newval;
-                        nil
-                    });
+                    { this.dial.value = newval }.defer;
 
                     this.step;
                 });
@@ -353,15 +348,15 @@ RcPendulumFadeIn : RcPendulumBase {
             this.synth.set(["arg",this.argNum-1].join,
                 endValue - (stepFactor * count));
 
-            AppClock.sched(0, {
+            {
                 this.dial.value = (endValue - (stepFactor * count)).asInteger;
                 nil
-            });
+            }.defer;
 
             count = count + 1;
             if ( count > steps, {
                 count = 0;
-                AppClock.sched(0, { this.dial.value = 0; nil; });
+                { this.dial.value = 0; nil; }.defer;
 
                 this.synth.set(["arg",this.argNum-1].join, 0);
 
@@ -497,10 +492,7 @@ RcPendulumTimer : RcPendulumBase {
 
         SystemClock.sched(startDelay, {
             if ( this.stopNow, { nil }, {
-                AppClock.sched(0, {
-                    this.dial.value = this.startValue;
-                    nil;
-                });
+                { this.dial.value = this.startValue; }.defer;
 
                 stepFactor = if ( startValue > endValue, {-1}, {1} );
 
@@ -514,10 +506,7 @@ RcPendulumTimer : RcPendulumBase {
                     var val = this.values.wrapAt( this.count );
                     this.synth.set(["arg",this.argNum-1].join, val);
 
-                    AppClock.sched(0, {
-                        this.dial.value = val;
-                        nil
-                    });
+                    { this.dial.value = val; }.defer;
 
                     this.count = this.count + 1;
 
@@ -636,10 +625,7 @@ RcPendulumRecorder : RcPendulumBase {
                 if ( this.stopNow, { nil }, {
                     this.synth.set(["arg",this.argNum-1].join, val);
 
-                    AppClock.sched(0, {
-                        this.dial.value = val;
-                        nil
-                    });
+                    { this.dial.value = val }.defer;
 
                     this.pos = this.pos + 1;
                     if ( this.stopNow, { nil }, {

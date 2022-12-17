@@ -39,10 +39,7 @@ RcPendulumSettings {
     }
 
     incrementDial { |which, val|
-        AppClock.sched(0, {
-            dials.incrementDial(which, val);
-            nil
-        });
+        { dials.incrementDial(which, val); }.defer;
     }
 
     newPendulum { |midibus, dal, synth, argnum|
@@ -50,7 +47,7 @@ RcPendulumSettings {
             currentPendulum = klzPendulum.new(midibus, dal, this.dials);
             currentPendulum.setSynth( synth, argnum );
         }, {
-            "WARNING: new pendulum created even though there is a current one".postln;
+            "WARNING: new pendulum created even though there is a one".postln;
         })
         ^currentPendulum;
     }

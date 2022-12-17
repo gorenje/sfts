@@ -98,7 +98,7 @@ SystemClock.sched(1.0, {
     });
 });
 
-~runOnAppClock = { |func| AppClock.sched(0, { func.value(); nil }); };
+~runOnAppClock = { |func| func.defer };
 
 ~doShellCmd = { |commandline, func|
     var piper = Pipe.new(commandline, "r");
@@ -754,7 +754,7 @@ cfgMgr.addSample = ~addSample;
     // dial settings
     view = FlowView(mainWindow, Rect(10, 50, 750, 60));
 
-    8.do { arg idx;
+    8.do { |idx|
         var func = { |knob|
             var synth = gui.currentSynth;
             if ( synth.notNil, { synth.set(["arg",idx].join, knob.value) });
