@@ -50,6 +50,7 @@ RcPadDef {
     var <>plotter;
     var <>midiBusListener;
     var <>linkMidi;
+    var <>buffer;
 
     *new { |main_view, comment_view, rowNum, colNum|
         ^super.new.init(main_view, comment_view, rowNum, colNum);

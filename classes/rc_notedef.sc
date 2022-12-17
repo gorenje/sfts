@@ -22,12 +22,12 @@ RcNoteDef {
     }
 
     show { |labelString, textValue, synth|
-        noteNum = labelString;
-        isFree = false;
-        ezText.value = textValue;
+        synth                   = synth;
+        noteNum                 = labelString;
+        isFree                  = false;
+        ezText.value            = textValue;
         ezText.labelView.string = labelString;
         ezText.visible_(true);
-        synth = synth;
     }
 
     hide {
@@ -37,13 +37,14 @@ RcNoteDef {
         noteNum    = nil;
         filename   = nil;
         presetData = nil;
+        buffer     = nil;
     }
 
     hideAndRelease {
         synth.set(\fadeTime, 2);
         synth.release;
         synth.free;
-        if ( buffer.isNil, {}, { buffer.free; buffer = nil; });
+        if ( buffer.notNil, { buffer.free; buffer = nil; });
         this.hide();
     }
 

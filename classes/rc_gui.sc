@@ -83,17 +83,18 @@ RcGui {
                 pad.sampleIdx = synthValues[12];
             });
 
-            pad.synth = note.synth;
-            pad.noteNum = note.noteNum;
+            pad.synth    = note.synth;
+            pad.noteNum  = note.noteNum;
             pad.filename = note.filename;
+            pad.buffer   = note.buffer;
 
             if ( note.presetData.notNil, {
                 note.presetData.setUpPendulums(pad);
             });
 
-            if ( note.buffer.notNil, {
+            if ( pad.buffer.notNil, {
                 AppClock.sched(0.2.rand, {
-                    note.buffer.loadToFloatArray(action: { arg array;
+                    pad.buffer.loadToFloatArray(action: { |array|
                         { pad.plotter.value = array; }.defer;
                     });
                 });
@@ -125,6 +126,12 @@ RcGui {
             pad.synth.set(\fadeTime, 2);
             pad.synth.release;
             pad.reset;
+            if ( pad.buffer.notNil, {
+                AppClock.sched(2.3, {
+                    pad.buffer.free;
+                    pad.buffer = nil;
+                });
+            });
             if ( activePad == pad, { activePad = nil });
         });
     }
