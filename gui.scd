@@ -545,34 +545,15 @@ cfgMgr.addSample = ~addSample;
         cfgMgr
     );
 
-    exitButton = Button(mainWindow, Rect(1650, 40, 120, 25));
-    exitButton.states = [["Quit", Color.black, Color.white]];
-    exitButton.action = {
-        var w = Window("Really Quit?",
-            resizable: false,
-            bounds: Rect((Window.screenBounds.width)/2,
-                (Window.screenBounds.height-180)/2, 330, 230)).front;
-
-        var cancelBut = Button(w, Rect(10, 180, 120, 25));
-        var exitBut = Button(w, Rect(200, 180, 120, 25));
-        var txt = StaticText.new(w, Rect(130, 60, 200, 30));
-
-        txt.string = "Really Quit?";
-
-        w.alwaysOnTop = true;
-
-        cancelBut.states = [["Cancel", Color.black, Color.white]];
-        cancelBut.action = { w.close; };
-
-        exitBut.states = [["Yes Quit", Color.black, Color.white]];
-        exitBut.action = {
+    exitButton = RcHelpers.buttonBW("Quit",mainWindow,Rect(1650,40,120,25),{
+        RcHelpers.confirmExit( {
             rcRecorder.quitting;
             try { gui.padCtrl.allOff; } {};
             SystemClock.sched(0.2, {
                 s.quit( { 0.exit; } );
             });
-        };
-    };
+        });
+    });
 
     Platform.case( \osx, {
         outDevSelector = PopUpMenu(mainWindow, Rect(780, 10, 150, 25));
@@ -600,18 +581,17 @@ cfgMgr.addSample = ~addSample;
         sampleRateButton.action = { "open -a 'Audio MIDI Setup'".unixCmd; };
     });
 
+    serverWinButton = RcHelpers.buttonBW("Server Window", mainWindow,
+        Rect(640, 10, 120, 25), {
+            s.makeWindow;
+        });
 
-    serverWinButton = Button(mainWindow, Rect(640, 10, 120, 25));
-    serverWinButton.states = [["Server Window", Color.black, Color.white]];
-    serverWinButton.action = { s.makeWindow; };
-
-    loadButton = Button(mainWindow, Rect(290, 10, 150, 25));
-    loadButton.states = [["Load Sample", Color.black, Color.white]];
-    loadButton.action = {
-        FileDialog({ |paths|
-            paths.do { |path| ~addSample.value(path); }
-        }, {}, fileMode: 3, stripResult: false);
-    };
+    loadButton = RcHelpers.buttonBW("Load Sample", mainWindow,
+        Rect(290, 10, 120, 25), {
+            FileDialog({ |paths|
+                paths.do { |path| ~addSample.value(path); }
+            }, {}, fileMode: 3, stripResult: false);
+        });
 
     view = FlowView(mainWindow, Rect(777, 40, 450, 67), margin: 3@5);
     view.background = Color.grey;
@@ -667,20 +647,22 @@ cfgMgr.addSample = ~addSample;
     gui.pendulumSelection.action = { |button|
         pendSettings.klzPendulum = pendulumClaess[button.value][1];
     };
-    gui.bb["pendulumSelectorCounter"] = RcGuiCounter.new(0,3);
+    gui.bb["pendulumSelectorCounter"] = RcGuiCounter.new(0,5);
 
-    ~psBut = { |name, initVal=0, minValue=0|
-        EZKnob(view, 180@24, name,
-            ControlSpec.new(minval: minValue, maxval: 59,
-                warp: 'lin', step: 0.1, default: initVal, units: "secs"),
-            unitWidth: 0, initVal: initVal, layout:\horz, labelWidth: 80)
-        .setColors(Color.grey,Color.white)
-        .font_(Font("Helvetica",11));
-    };
+    {
+        var psBut = { |name, initVal=0, minValue=0|
+            EZKnob(view, 180@24, name,
+                ControlSpec.new(minval: minValue, maxval: 59,
+                    warp: 'lin', step: 0.1, default: initVal, units: "secs"),
+                unitWidth: 0, initVal: initVal, layout:\horz, labelWidth: 80)
+            .setColors(Color.grey,Color.white)
+            .font_(Font("Helvetica",11));
+        };
 
-    pendSettings.dials.start    = ~psBut.value( "Start", 0 );
-    pendSettings.dials.duration = ~psBut.value( "Duration", 1, 0.1 );
-    pendSettings.dials.end      = ~psBut.value( "End", 0 );
+        pendSettings.dials.start    = psBut.value( "Start", 0 );
+        pendSettings.dials.duration = psBut.value( "Duration", 1, 0.1 );
+        pendSettings.dials.end      = psBut.value( "End", 0 );
+    }.value();
 
     // dial settings
     view = FlowView(mainWindow, Rect(10, 50, 750, 60));
@@ -911,7 +893,6 @@ cfgMgr.addSample = ~addSample;
 // setup presets info
 {
     var view = FlowView(mainWindow, Rect(1250, 340, 530, 300));
-    var loadButton, saveButton;
 
     view.background = Color.grey;
 

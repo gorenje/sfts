@@ -103,9 +103,20 @@ RcGui {
         ^pad;
     }
 
+    freePads {
+        ^pads.reject { |a| a.tryPerform(\isDefined) };
+    }
+
+    countFreePads {
+        ^this.freePads.size;
+    }
+
+    padIdxToMidi { |idx|
+        ^midiToPadIdx.findKeyForValue( idx.asInteger );
+    }
+
     padTaken { |midiControlNum|
-        var pad = pads[midiToPadIdx[midiControlNum]];
-        ^(if ( pad.notNil, { pad.isDefined }, { false } ));
+        ^pads[midiToPadIdx[midiControlNum]].tryPerform(\isDefined);
     }
 
     setActivePad { |pad|
@@ -123,15 +134,18 @@ RcGui {
 
     releasePad { |pad|
         if ( pad.notNil, {
-            pad.synth.set(\fadeTime, 2);
-            pad.synth.release;
+            var buf = pad.buffer;
+            var synth = pad.synth;
+
+            pad.buffer = nil;
+            pad.synth = nil;
+
+            synth.set(\fadeTime, 2);
+            synth.release;
+
             pad.reset;
-            if ( pad.buffer.notNil, {
-                AppClock.sched(2.3, {
-                    pad.buffer.free;
-                    pad.buffer = nil;
-                });
-            });
+
+            if ( buf.notNil, { AppClock.sched(2.3, { buf.free; nil; }); });
             if ( activePad == pad, { activePad = nil });
         });
     }
@@ -237,10 +251,33 @@ RcGui {
         "Saved Config to %\n".postf(path);
     }
 
-    padIdxToMidi { |idx|
-        ^midiToPadIdx.findKeyForValue(
-            idx.asInteger
-        );
+    mergeConfigFile { |path, loadSample|
+        var dataDict = path.parseYAMLFile;
+        var emptyPads = this.freePads;
+
+        if ( dataDict["allPadIds"].size > this.countFreePads, {
+            RcHelpers.messageView(
+                format("Not enough samples free to accomodate new scape "++
+                    " file. You need to free % samples before merging.",
+                dataDict["allPadIds"].size - this.countFreePads)
+            );
+            ^nil;
+        });
+
+        format( "Merging config: %", path ).postln;
+
+        playingNotes.reject { |n| n.isNil }.do { |n|
+            if ( n.synth.notNil, { n.hideAndRelease; })
+        };
+
+        dataDict["allPadIds"].do { |pdid,idx|
+            if ( dataDict[pdid]["filename"].notNil, {
+                loadSample.value( dataDict[pdid]["filename"] );
+            });
+            dataDict[pdid]["padnum"] = pads.indexOf(emptyPads[idx]);
+        };
+
+        dataDict["allPadIds"].do { |pdid| this.loadPad_(dataDict,pdid); };
     }
 
     loadConfigFromFile { |path, loadSample|
@@ -270,56 +307,56 @@ RcGui {
             });
         };
 
-        dataDict["allPadIds"].do { |pdid|
-            var padData = dataDict[pdid];
-
-            var synthDef = synthLookup.reject { |a|
-                a.first != padData["synth"]
-            }.first;
-            var padMidiNum = midiToPadIdx.findKeyForValue(
-                padData["padnum"].asInteger
-            );
-
-            var initVals = padData["values"].collect { |a| a.asInteger };
-            var synthValues = initVals ++ (0!6);
-
-            var note = nil;
-
-            this.synthType = synthLookup.indexOf( synthDef );
-
-            if ( padData["filename"].isNil, {
-                note = synthDef[2].value(padData["note"].asInteger,
-                    initVals[0],initVals);
-                synthValues[12] = inf;
-            }, {
-                var sampleIdx = allSamples.collect { |a|
-                    a.filename
-                }.indexOfEqual( padData["filename"] );
-                synthValues[12] = sampleIdx;
-                note = synthDef[2].value( sampleIdx, initVals[0],initVals);
-            });
-
-            // give the gui and the app one secound to clean up all the
-            // pendulums that got stopped at the beginning of this method.
-            AppClock.sched(0.7 + 0.3.rand, {
-                var pad = this.setupPad( padMidiNum, synthValues, note );
-
-                note.synth.set(\padNr, padMidiNum);
-                note.hide();
-
-                try { this.padCtrl.padOn( padData["padnum"].asInteger ) } {};
-
-                padData["pendulums"].do { |pendId|
-                    var pend = RcPendulumBase.newWithPad(dataDict[pendId],pad);
-                    if ( pend.notNil, {
-                        pad.pushPendulum(pend.startFromYamlLoad);
-                    });
-                };
-                nil
-            });
-        };
+        dataDict["allPadIds"].do { |pdid| this.loadPad_(dataDict,pdid); };
 
         ^dataDict["serverVolume"].asFloat;
+    }
+
+    loadPad_ { |dataDict,pdid|
+        var padData = dataDict[pdid];
+
+        var synthDef = synthLookup.reject { |a|
+            a.first != padData["synth"]
+        }.first;
+        var padMidiNum = this.padIdxToMidi( padData["padnum"] );
+
+        var initVals = padData["values"].collect { |a| a.asInteger };
+        var synthValues = initVals ++ (0!6);
+
+        var note = nil;
+
+        this.synthType = synthLookup.indexOf( synthDef );
+
+        if ( padData["filename"].isNil, {
+            note = synthDef[2].value(padData["note"].asInteger,
+                initVals[0],initVals);
+            synthValues[12] = inf;
+        }, {
+            var sampleIdx = allSamples.collect { |a|
+                a.filename
+            }.indexOfEqual( padData["filename"] );
+            synthValues[12] = sampleIdx;
+            note = synthDef[2].value( sampleIdx, initVals[0],initVals);
+        });
+
+        // give the gui and the app one secound to clean up all the
+        // pendulums that got stopped at the beginning of this method.
+        AppClock.sched(0.7 + 0.3.rand, {
+            var pad = this.setupPad( padMidiNum, synthValues, note );
+
+            note.synth.set(\padNr, padMidiNum);
+            note.hide();
+
+            try { this.padCtrl.padOn( padData["padnum"].asInteger ) } {};
+
+            padData["pendulums"].do { |pendId|
+                var pend = RcPendulumBase.newWithPad(dataDict[pendId],pad);
+                if ( pend.notNil, {
+                    pad.pushPendulum(pend.startFromYamlLoad);
+                });
+            };
+            nil
+        });
     }
 
     updateMappingTable { |keymappings, chan|
