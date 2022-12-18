@@ -9,9 +9,11 @@ var noteRemapPresets = Dictionary.new;
 var optsDir          = Platform.resourceDir ++ "/assets/configs";
 var presetsFile      = optsDir ++ "/presets.yaml";
 
-var mainWindow       = Window("Sound <---- Scape",
+var mainWindow       = Window(
+    "Sound <---- Scape",
     bounds: Rect(0,0,1810,1150),
-    resizable: false).front;
+    resizable: false
+).front;
 
 var gui;
 var midiBus;
@@ -30,18 +32,11 @@ GUI.skin.plot.gridColorY = Color.white;
 GUI.skin.plot.labelX = "";
 GUI.skin.plot.labelY = "";
 
-// Variables defined by home-made classes. This is intended so that one
-// day when there is a way to compile and include class files, I won't need
-// the Makefile to copy the classes/*.sc files to the Extensions folder.
-//    does not work --> thisProcess.interpreter.compileFile("%/classes/rc_config.sc".format(thisProcess.nowExecutingPath.dirname)).();
-//    does not work --> "%/classes/rc_config.sc".format(thisProcess.nowExecutingPath.dirname).importPaths
-//    does not work --> "./classes/rc_config.sc"..relativePath
-// there simply does not seem to be a way to compile and import class Files.
-gui              = RcGui.new;
-midiBus          = RcMidiMessageBus.new;
-pendSettings     = RcPendulumSettings.new(RcPendulumTimer);
-pendulumClaess   = RcPendulumBase.dropDownList;
-cfgMgr           = RcConfig.new(optsDir, gui, s);
+gui            = RcGui.new;
+midiBus        = RcMidiMessageBus.new;
+pendSettings   = RcPendulumSettings.new(RcPendulumTimer, gui, midiBus);
+pendulumClaess = RcPendulumBase.dropDownList;
+cfgMgr         = RcConfig.new(optsDir, gui, s);
 
 randomBlackBoard.add("currChannel" -> 0);
 
@@ -49,6 +44,7 @@ randomBlackBoard.add("currChannel" -> 0);
 // mapping.
 try {
     MIDIIn.connectAll;
+    midiBus.connectTo(MIDIIn);
 } {};
 
 if ( File.exists( optsDir ).not, {
@@ -98,7 +94,7 @@ SystemClock.sched(1.0, {
     });
 });
 
-~runOnAppClock = { |func| AppClock.sched(0, { func.value(); nil }); };
+~runOnAppClock = { |func| func.defer };
 
 ~doShellCmd = { |commandline, func|
     var piper = Pipe.new(commandline, "r");
@@ -145,10 +141,10 @@ SystemClock.sched(1.0, {
     if( sample.notNil, {
         sample.getn(0, RcSynthDef.argCount, { |ary|
             ~runOnAppClock.value({
-                (0..7).do { |idx| gui.knobs[idx].value = ary[idx]; };
+                8.do { |idx| gui.knobs[idx].value = ary[idx]; };
             });
         });
-    }, { (0..7).do { |idx| gui.knobs[idx].value = 0; }; });
+    }, { 8.do { |idx| gui.knobs[idx].value = 0; }; } );
 };
 
 ~playSample = { |num,vel,initVals|
@@ -161,24 +157,15 @@ SystemClock.sched(1.0, {
         var synthType = gui.synthType;
 
         var action = { |buffer|
-            var initArgs  = List.newUsing([
+            var initArgs  = [
                 "num",       num,
                 "vel",       vel,
                 "bufnum",    buffer.bufnum,
                 "sampleIdx", sampleIdx,
                 "arg0",      vel,
-            ]);
+            ] ++ RcSynthDef.addInitVals(initVals);
 
-            if ( if ( initVals.notNil, { initVals.notEmpty }, { false } ), {
-                7.do { |idx|
-                    initArgs.add("arg" ++ (idx+1)).add( initVals[idx+1] );
-                };
-            }, {
-                initArgs.add( "arg1" ).add( 64 );
-            });
-
-            note.synth     = Synth.new(synthLookup[synthType].first,
-                                       initArgs.asArray);
+            note.synth     = Synth.new(synthLookup[synthType].first, initArgs);
             note.filename  = filename;
             note.synthType = synthLookup[synthType][1];
             note.buffer    = buffer;
@@ -199,22 +186,15 @@ SystemClock.sched(1.0, {
 ~playSinOsc = { |num,vel,initVals|
     var note = gui.obtainNote;
     if (note.notNil, {
-        var initArgs = List.newUsing([
-            "num",    num,
-            "vel",    vel,
-            "bufnum", nil,
-            "arg0",   vel,
-        ]);
+        var initArgs = [
+            "num",       num,
+            "vel",       vel,
+            "bufnum",    nil,
+            "sampleIdx", nil,
+            "arg0",      vel,
+        ] ++ RcSynthDef.addInitVals(initVals);
 
-        if ( if ( initVals.notNil, { initVals.notEmpty }, { false } ), {
-            7.do {|idx| initArgs.add("arg" ++ (idx+1)).add( initVals[idx+1] );};
-        }, {
-            initArgs.add( "arg1" ).add( 64 );
-        });
-
-        note.synth = Synth.new(synthLookup[gui.synthType].first,
-            initArgs.asArray);
-
+        note.synth     = Synth.new(synthLookup[gui.synthType].first, initArgs);
         note.synthType = synthLookup[gui.synthType][1];
 
         ~runOnAppClock.value({
@@ -235,9 +215,7 @@ gui.allSamples  = allSamples;
     if ( (num > 19) && (num < 36), {
         var idx,ref;
         if ( val == 0, {
-            ~runOnAppClock.value({
-                gui.releasePadByMidiControlNum(num);
-            });
+            { gui.releasePadByMidiControlNum(num); }.defer;
         }, {
             // freeze and keep.
             // first ensure that the pad isn't already taken, then find the
@@ -333,12 +311,7 @@ gui.allSamples  = allSamples;
     if ( (num < 9) && (val != 64), {
         var synth = gui.currentSynth;
 
-        var newval = gui.currentDial(num-1).value;
-
-        newval = newval + (val - 64);
-
-        if ( newval < 0, { newval = 0 });
-        if ( newval > 127, { newval = 127 });
+        var newval = (gui.currentDial(num-1).value + (val - 64)).asInteger.clampTo(0,127);
 
         if ( synth.notNil, { synth.set(["arg",num-1].join, newval); });
 
@@ -379,11 +352,7 @@ gui.allSamples  = allSamples;
 ~midiSampleSelector = { |src, chan, num, val|
     if ( (num == 9) && (val != 64), {
         gui.bb["sampleSelectorCounter"].willSomethingChange(val, { |val|
-            if ( val > 64, {
-                gui.sampleSelector.value = (gui.sampleSelector.value + 1).min(gui.sampleSelector.items.size-1);
-            }, {
-                gui.sampleSelector.value = 0.max(gui.sampleSelector.value - 1);
-            });
+            RcHelpers.drpdwnSetValue(val,gui.sampleSelector,false);
         });
     });
 };
@@ -394,12 +363,7 @@ gui.allSamples  = allSamples;
             pendSettings.go;
         }, {
             if ( gui.lastDialedDial.notNil && gui.currentSynth.notNil, {
-                gui.pushPendulum(pendSettings.newPendulum(
-                    midiBus,
-                    gui.lastDialedDial,
-                    gui.currentSynth,
-                    gui.currentPad.knobIdx(gui.lastDialedDial) + 1
-                ));
+                gui.pushPendulum(pendSettings.newPendulum());
             });
         });
     });
@@ -408,17 +372,7 @@ gui.allSamples  = allSamples;
 ~midiPendulumSelector = { |src, chan, num, val|
     if ( (num == 11) && (val != 64), {
         gui.bb["pendulumSelectorCounter"].willSomethingChange(val, { |val|
-            if (  val > 64, {
-                if ( gui.pendulumSelection.value != (gui.pendulumSelection.items.size-1), {
-                    gui.pendulumSelection.value = (gui.pendulumSelection.value + 1).min(gui.pendulumSelection.items.size-1);
-                    gui.pendulumSelection.valueAction_(gui.pendulumSelection.value);
-                });
-            }, {
-                if ( gui.pendulumSelection.value != 0, {
-                    gui.pendulumSelection.value = 0.max(gui.pendulumSelection.value - 1);
-                    gui.pendulumSelection.valueAction_(gui.pendulumSelection.value);
-                });
-            });
+            RcHelpers.drpdwnSetValue(val, gui.pendulumSelection);
         });
     });
 };
@@ -450,29 +404,14 @@ gui.allSamples  = allSamples;
 ~midiSynthSelector = { |src, chan, num, val|
     if ( (num == 14) && (val != 64), {
         gui.bb["synthSelectorCounter"].willSomethingChange(val, { |val|
-            if ( val > 64, {
-                if ( gui.synthSelection.value != (gui.synthSelection.items.size-1), {
-                    gui.synthSelection.value = (gui.synthSelection.value + 1).min(gui.synthSelection.items.size-1);
-                    gui.synthSelection.valueAction_(gui.synthSelection.value);
-                });
-            }, {
-                if ( gui.synthSelection.value != 0, {
-                    gui.synthSelection.value = 0.max(gui.synthSelection.value - 1);
-                    gui.synthSelection.valueAction_(gui.synthSelection.value);
-                });
-            });
+            RcHelpers.drpdwnSetValue(val, gui.synthSelection);
         });
     });
-};
-
-~midiBusFiller = { |src, chan, num, val|
-    midiBus.push( [src, chan, num, val] )
 };
 
 MIDIIn.addFuncTo(\noteOff, ~noteOff);
 MIDIIn.addFuncTo(\noteOn,  ~noteOn);
 
-MIDIIn.addFuncTo(\control, ~midiBusFiller);
 MIDIIn.addFuncTo(\control, ~controlSetSynthValue);
 MIDIIn.addFuncTo(\control, ~midiStartRecord);
 MIDIIn.addFuncTo(\control, ~midiSelectActivePad);
@@ -489,7 +428,7 @@ MIDIIn.addFuncTo(\control, ~midiGlobalVolume);
 
 MIDIIn.addFuncTo(\control, { |src, chan, num, val|
     if ( num == 64, {
-        // this sets the preset channel - in this case 32 presets channles,
+        // this sets the preset channel - in this case 32 presets channels,
         // each with 9 notes.
         ~runOnAppClock.value({
             randomBlackBoard.add("currChannel" -> [0,31,\lin].asSpec.map(
@@ -674,25 +613,24 @@ cfgMgr.addSample = ~addSample;
         }, {}, fileMode: 3, stripResult: false);
     };
 
-    // title for the config
-    gui.titleField = EZText(
-        mainWindow, Rect(777, 40, 450, 25), "title",
-        initVal: nil, labelWidth: 40, layout: \horz
-    )
-    .setColors(Color.white, Color.black, textBackground: Color.white)
-    .enabled_(true)
-    .visible_(true);
-
-
-    // sample selector and synth type selector
-    view = FlowView(mainWindow, Rect(777, 77, 450, 67), margin: 3@5);
+    view = FlowView(mainWindow, Rect(777, 40, 450, 67), margin: 3@5);
     view.background = Color.grey;
 
-    {
-        var txt = StaticText.new(view, 285@25);
-        txt.string = "Select sample VVV  select synth >>";
-        txt.stringColor = Color.white;
-    }.value();
+    // title for the config
+    gui.titleField = EZText( view, 440@50, "Scape Title",
+        initVal: nil, labelWidth: 40, layout: \vert
+    )
+    .setColors(Color.white, Color.black,
+        textBackground: Color.white,
+        stringBackground: Color.grey,
+        stringColor: Color.white
+    ).enabled_(true).visible_(true);
+
+    // sample selector and synth type selector
+    view = FlowView(mainWindow, Rect(777, 112, 450, 67), margin: 3@5);
+    view.background = Color.grey;
+
+    RcHelpers.addStaticText(view, "Sample and Synth Selectors");
 
     gui.synthSelection             = PopUpMenu(view, 150@25);
     gui.synthSelection.items       = synthLookup.collect { |a| a[1] };
@@ -718,9 +656,12 @@ cfgMgr.addSample = ~addSample;
     gui.bb["sampleSelectorCounter"] = RcGuiCounter.new(0,2);
 
     // pendulum settings
-    view = FlowView(mainWindow, Rect(10, 112, 750, 32), margin: 3@3);
+    view = FlowView(mainWindow, Rect(10, 112, 750, 67), margin: 3@3);
     view.background = Color.grey;
 
+    RcHelpers.addStaticText(view,"Pendulum selector and settings");
+
+    view.startRow;
     gui.pendulumSelection = PopUpMenu(view, 180@24);
     gui.pendulumSelection.items = pendulumClaess.collect { |a| a[0] };
     gui.pendulumSelection.action = { |button|
@@ -744,7 +685,7 @@ cfgMgr.addSample = ~addSample;
     // dial settings
     view = FlowView(mainWindow, Rect(10, 50, 750, 60));
 
-    8.do { arg idx;
+    8.do { |idx|
         var func = { |knob|
             var synth = gui.currentSynth;
             if ( synth.notNil, { synth.set(["arg",idx].join, knob.value) });
@@ -762,18 +703,40 @@ cfgMgr.addSample = ~addSample;
     };
 }.value();
 
-
 // list of frozen samples
 {
-    var view2 = FlowView(mainWindow, Rect(10, 160, 1220, 700));
+    var view2 = FlowView(mainWindow, Rect(10, 230, 1240, 680));
     // view2.background = Color.grey;
 
     // this defines the 16 pads, 4 rows of 4 pads.
     4.do { |idx|
         view2.startRow;
 
-        // there is a gap between the top 2 rows and the bottom 2 rows.
-        if ( idx == 2, { 8.do { view2.startRow } } );
+        // add a gap between the top 2 rows and the bottom 2 rows.
+        if ( idx == 2, {
+
+            // midi linking controls
+            var view = nil;
+
+            FlowView( view2, Rect(10,10, 450,30));
+            view = FlowView(view2, Rect(10, 200, 300, 30), margin: 3@3);
+            view.background = Color.grey;
+
+            RcHelpers.addStaticText(view,"Link Midi Dials. All/None & Toggle:");
+
+            CheckBox.new( view, 15@15, "").action = { |cbx|
+                gui.pads.do { |paddef|
+                    RcHelpers.setValueIfEnabled(paddef.linkMidi,cbx);
+                };
+            };
+            CheckBox.new( view, 15@15, "").action = { |cbx|
+                gui.pads.do { |paddef|
+                    RcHelpers.toggleValueIfEnabled(paddef.linkMidi);
+                };
+            };
+
+            view2.startRow;
+        });
 
         4.do { |ridx|
             var view = FlowView(view2, Rect(100, 100, 300, 150));
@@ -808,13 +771,12 @@ cfgMgr.addSample = ~addSample;
             gui.pads.add(paddef);
 
             // this defines the eight dials, 2 rows of 4.
-            2.do { |cidx|
+            2.do { |kridx|
                 view.startRow;
 
-                4.do { |kjdx|
-
+                4.do { |kcidx|
                     var knob_action = { |knob|
-                        var argidx = (cidx * 4) + kjdx;
+                        var argidx = (kridx * 4) + kcidx;
                         if ( paddef.synth.notNil, {
                             paddef.synth.set(["arg",argidx].join, knob.value)
                         });
@@ -830,7 +792,9 @@ cfgMgr.addSample = ~addSample;
                     paddef.knobs.add(knob);
                 };
 
-                if ( cidx == 0,
+                // first row or second row? second row has checkbox and first
+                // row just synth drop down
+                if ( kridx == 0,
                     {
                         paddef.typeText = PopUpMenu(view, 150@20);
                         paddef.typeText.items = synthLookup.collect {|a| a[1] };
@@ -851,7 +815,20 @@ cfgMgr.addSample = ~addSample;
                         }
                     },
                     {
-                        paddef.fileText = EZText(view, 150@20, nil,
+                        paddef.linkMidi = CheckBox.new( view, 20@20, "");
+                        paddef.linkMidi.value = false;
+                        paddef.linkMidi.enabled = false;
+                        paddef.linkMidi.action = { |checkbox|
+                            if ( checkbox.value, {
+                                checkbox.setBgColor(Color.red);
+                                midiBus.add_listener(paddef.midiBusListener);
+                            }, {
+                                checkbox.setBgColor(Color.white);
+                                midiBus.remove_listener(paddef.midiBusListener);
+                            });
+                        };
+
+                        paddef.fileText = EZText(view, 130@20, nil,
                             initVal: nil,
                             labelWidth: 0,
                             layout: \horz).
@@ -886,14 +863,49 @@ cfgMgr.addSample = ~addSample;
             OSCFunc.new( { |msg|
                 if ( msg[3].asInteger == paddef.midiPadNum, {
                     paddef.samplePos = msg[4];
-                    ~runOnAppClock.value({
-                        paddef.ranger.value = msg[4];
-                    });
+                    { paddef.ranger.value = msg[4]; }.defer;
                 });
             }, '/pos');
-
         };
-    }
+        {
+            var view3 = FlowView(view2, 20@150);
+
+            13.do { view3.startRow };
+
+            CheckBox.new( view3, 15@15, "").action = { |cbx|
+                Range( (idx*4), 4 ).do { |padidx|
+                    RcHelpers.setValueIfEnabled(gui.pads[padidx].linkMidi,cbx);
+                };
+            };
+
+            view3.startRow;
+
+            CheckBox.new( view3, 15@15, "").action = { |cbx|
+                Range( (idx*4), 4 ).do { |padidx|
+                    RcHelpers.toggleValueIfEnabled(gui.pads[padidx].linkMidi);
+                };
+            };
+        }.value();
+    };
+    view2.startRow;
+
+    // link midi dials checkboxs by columns
+    4.do { |cidx|
+        var v = FlowView.new( view2, 300@20);
+
+        FlowView.new( v, 120@20 );
+
+        CheckBox.new( v, 15@15, "").action = { |cbx|
+            Interval(cidx, 15, 4).do { |padidx|
+                RcHelpers.setValueIfEnabled(gui.pads[padidx].linkMidi,cbx);
+            };
+        };
+        CheckBox.new( v, 15@15, "").action = { |cbx|
+            Interval(cidx, 15, 4).do { |padidx|
+                RcHelpers.toggleValueIfEnabled(gui.pads[padidx].linkMidi);
+            };
+        };
+    };
 }.value();
 
 // setup presets info
@@ -958,7 +970,6 @@ cfgMgr.addSample = ~addSample;
 
     RcPresets.setupGui( mainWindow, noteRemapPresets, allSamples,
         ~addSample, presetsFile, randomBlackBoard);
-
 }.value();
 
 // list of notes being played
@@ -1025,12 +1036,14 @@ cfgMgr.addSample = ~addSample;
             var darkPlace = NetAddr(hostPort[0], hostPort[1].asInteger);
 
             rcRecorder.oscEndpoint = darkPlace;
+            checkbox.setBgColor(Color.red);
 
             SystemClock.sched(0.05, {
                 try { gui.asOSC(darkPlace); } {};
                 if ( rcRecorder.oscEndpoint.notNil, 0.05, nil );
             });
         }, {
+            checkbox.setBgColor(Color.white);
             rcRecorder.oscEndpoint = nil;
         });
     };
