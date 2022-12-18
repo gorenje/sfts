@@ -32,11 +32,11 @@ GUI.skin.plot.gridColorY = Color.white;
 GUI.skin.plot.labelX = "";
 GUI.skin.plot.labelY = "";
 
-gui              = RcGui.new;
-midiBus          = RcMidiMessageBus.new;
-pendSettings     = RcPendulumSettings.new(RcPendulumTimer, gui, midiBus);
-pendulumClaess   = RcPendulumBase.dropDownList;
-cfgMgr           = RcConfig.new(optsDir, gui, s);
+gui            = RcGui.new;
+midiBus        = RcMidiMessageBus.new;
+pendSettings   = RcPendulumSettings.new(RcPendulumTimer, gui, midiBus);
+pendulumClaess = RcPendulumBase.dropDownList;
+cfgMgr         = RcConfig.new(optsDir, gui, s);
 
 randomBlackBoard.add("currChannel" -> 0);
 

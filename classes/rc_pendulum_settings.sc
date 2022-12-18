@@ -57,6 +57,7 @@ RcPendulumSettings {
                 rcGui.currentSynth,
                 rcGui.currentPad.knobIdx(rcGui.lastDialedDial) + 1
             );
+            currentPendulum.setGui( rcGui );
         }, {
             Error("WARNING: new pendulum created even though there is a one").throw;
         })

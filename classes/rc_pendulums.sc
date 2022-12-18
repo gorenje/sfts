@@ -5,10 +5,12 @@ RcPendulumBase {
     var <>synth;
     var <>argNum;
     var <>step;
+    var <>gui;
     var <>stopNow;
     var <>settingsDials;
     var <>startDelay;
     var <>endDelay;
+    var <>paddef;
 
     *new { |midiBus,dal,settingDials|
         var obj;
@@ -44,7 +46,8 @@ RcPendulumBase {
             \Randomise,     { RcPendulumRandomise.newEmpty;     },
             \FadeOut,       { RcPendulumFadeOut.newEmpty;       },
             \FadeIn,        { RcPendulumFadeIn.newEmpty;        },
-            \FadeInOneTime, { RcPendulumFadeInOneTime.newEmpty; }
+            \FadeInOneTime, { RcPendulumFadeInOneTime.newEmpty; },
+            \RecordAll,     { RcPendulumRecordAll.newEmpty;     }
         ).initFromYamlData(yamlData);
 
         obj.startDelay = yamlData.atFail("startDelay", { 0 }).asFloat;
@@ -62,7 +65,8 @@ RcPendulumBase {
 
         obj.setSynth( pad.synth, yamlData["argnum"].asInteger );
 
-        obj.dial = pad.knobs[obj.argNum-1];
+        obj.dial   = pad.knobs[obj.argNum-1];
+        obj.paddef = pad;
 
         if ( pendulums.isNil, { pendulums = Dictionary.new });
         if ( pendulums[obj.dial].isNil, { pendulums[obj.dial] = List.new; });
@@ -72,12 +76,13 @@ RcPendulumBase {
     }
 
     *dropDownList {
-        ^[ ["Timer",     RcPendulumTimer],
-           ["Recorder",  RcPendulumRecorder],
-           ["Fade In",   RcPendulumFadeIn],
-           ["Fade Out",  RcPendulumFadeOut],
-           ["Randomise", RcPendulumRandomise],
-           ["Delete",    RcPendulumRemove],
+        ^[ ["Timer",      RcPendulumTimer],
+           ["Recorder",   RcPendulumRecorder],
+           ["Fade In",    RcPendulumFadeIn],
+           ["Fade Out",   RcPendulumFadeOut],
+           ["Randomise",  RcPendulumRandomise],
+           ["Record All", RcPendulumRecordAll],
+           ["Delete",     RcPendulumRemove],
         ];
     }
 
@@ -101,6 +106,10 @@ RcPendulumBase {
     setSynth { |s, n|
         this.synth = s;
         this.argNum = n;
+    }
+
+    setGui { |g|
+        this.gui = g;
     }
 
     stop { |keepValue = false|
@@ -651,6 +660,127 @@ RcPendulumRecorder : RcPendulumBase {
     asYaml { |pendId|
         ^format("pend%:\n"        ++
             "  type: Recorder\n"  ++
+            "  values: [%]\n"     ++
+            "  startDelay: %\n"   ++
+            "  endDelay: %\n"     ++
+            "  argnum: %\n",
+            pendId,
+            values.collect { |a| a }.join(","),
+            startDelay.asFloat,
+            endDelay.asFloat,
+            argNum);
+    }
+
+    startFromYamlLoad {
+        this.go_for_it;
+        ^this;
+    }
+}
+
+RcPendulumRecordAll : RcPendulumRecorder {
+    var <>midiBus;
+
+    init { |mBus, dal, settingDials|
+        this.values = List.new;
+        this.pos = 0;
+        this.midiBus = mBus;
+    }
+
+    initFromYamlData { |yamlData|
+        values = yamlData["values"].collect { |a|
+            [ a[0].asFloat ] ++ [a[1].collect { |b| b.asFloat }]
+        };
+
+        ^this;
+    }
+
+    setGui { |gui|
+        var thisObj, midiBusListener;
+
+        this.gui    = gui;
+        this.paddef = gui.currentPad;
+        thisObj     = this;
+
+        this.values.add(
+            [Date.localtime.rawSeconds] ++
+            [paddef.knobs.collect {|k|
+                k.value
+            }]
+        );
+
+        midiBusListener = { |tstamp, src, chan, num, val|
+            if ( num == 18, {
+                var last_value = thisObj.values[thisObj.values.size-1];
+                last_value[0] = tstamp - last_value[0];
+
+                thisObj.midiBus.remove_listener(midiBusListener);
+
+                thisObj.endDelay   = thisObj.settingsDials.end.value;
+                thisObj.startDelay = thisObj.settingsDials.start.value;
+                thisObj.go_for_it;
+            });
+
+            if ( (num > 0) && (num < 9), {
+                var last_value = thisObj.values[thisObj.values.size-1];
+
+                last_value[0] = tstamp - last_value[0];
+                thisObj.values.add(
+                    [tstamp] ++ [thisObj.paddef.knobs.collect {|k| k.value }]
+                );
+            });
+        };
+        this.midiBus.add_listener(midiBusListener);
+
+        this.setPrepareColour_;
+    }
+
+    loop_ {
+        var valLen = this.values.size;
+        this.pos = 0;
+
+        this.setLoopColour_([
+            Color(0.7,0.8,0.2),
+            Color(),
+            Color(0.85882352941176, 0.85882352941176, 0.85882352941176),
+            Color() ]
+        );
+
+        SystemClock.sched( startDelay, {
+            SystemClock.sched(0.0, {
+                var val = this.values.wrapAt( this.pos )[1];
+
+                if ( this.stopNow, { nil }, {
+                    this.synth.set(*val.collect { |v,i|
+                        [format("arg%",i),v] }.flatten;
+                    );
+
+                    { val.do { |v,i| paddef.knobs[i].value = v; } }.defer;
+
+                    this.pos = this.pos + 1;
+                    if ( this.stopNow, { nil }, {
+                        if ( ((this.pos % valLen) == 0) && (this.endDelay > 0),{
+                            this.endDelay;
+                        }, {
+                            this.values.wrapAt( this.pos-1 )[0];
+                        });
+                    });
+                });
+            });
+            nil
+        });
+    }
+
+    go_for_it {
+        if ( this.values.size > 1, { this.loop_; }, { this.stop; } );
+    }
+
+    initValue { |v|
+        ^this.values[0][1][argNum-1];
+    }
+
+    asYaml { |pendId|
+        ^format("pend%:\n"        ++
+            "  type: RecordAll\n"  ++
             "  values: [%]\n"     ++
             "  startDelay: %\n"   ++
             "  endDelay: %\n"     ++
