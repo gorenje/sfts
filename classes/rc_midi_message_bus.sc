@@ -5,6 +5,12 @@ RcMidiMessageBus {
         ^super.new.init();
     }
 
+    connectTo { |midiin|
+        midiin.addFuncTo(\control, { |src, chan, num, val|
+            this.push( [src, chan, num, val] )
+        });
+    }
+
     init {
         listeners = FunctionList.new([]);
     }

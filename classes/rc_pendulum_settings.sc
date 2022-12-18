@@ -27,27 +27,38 @@ RcPendulumSettings {
     var <>dials;
     var <>klzPendulum;
     var <>currentPendulum;
+    var <>rcGui;
+    var <>rcMidiBus;
 
-    *new { |klz|
-        ^super.new.init(klz);
+    *new { |klz,gui,midibus|
+        ^super.new.init(klz,gui,midibus);
     }
 
-    init { |klz|
-        dials = RcPendulumSettingsDial.new;
-        klzPendulum = klz;
+    init { |klz,gui,midibus|
+        dials           = RcPendulumSettingsDial.new;
+        klzPendulum     = klz;
         currentPendulum = nil;
+        rcGui           = gui;
+        rcMidiBus       = midibus;
     }
 
     incrementDial { |which, val|
         { dials.incrementDial(which, val); }.defer;
     }
 
-    newPendulum { |midibus, dal, synth, argnum|
+    newPendulum {
         if ( currentPendulum.isNil, {
-            currentPendulum = klzPendulum.new(midibus, dal, this.dials);
-            currentPendulum.setSynth( synth, argnum );
+            currentPendulum = klzPendulum.new(
+                rcMidiBus,
+                rcGui.lastDialedDial,
+                dials
+            );
+            currentPendulum.setSynth(
+                rcGui.currentSynth,
+                rcGui.currentPad.knobIdx(rcGui.lastDialedDial) + 1
+            );
         }, {
-            "WARNING: new pendulum created even though there is a one".postln;
+            Error("WARNING: new pendulum created even though there is a one").throw;
         })
         ^currentPendulum;
     }

@@ -32,16 +32,9 @@ GUI.skin.plot.gridColorY = Color.white;
 GUI.skin.plot.labelX = "";
 GUI.skin.plot.labelY = "";
 
-// Variables defined by home-made classes. This is intended so that one
-// day when there is a way to compile and include class files, I won't need
-// the Makefile to copy the classes/*.sc files to the Extensions folder.
-//    does not work --> thisProcess.interpreter.compileFile("%/classes/rc_config.sc".format(thisProcess.nowExecutingPath.dirname)).();
-//    does not work --> "%/classes/rc_config.sc".format(thisProcess.nowExecutingPath.dirname).importPaths
-//    does not work --> "./classes/rc_config.sc"..relativePath
-// there simply does not seem to be a way to compile and import class Files.
 gui              = RcGui.new;
 midiBus          = RcMidiMessageBus.new;
-pendSettings     = RcPendulumSettings.new(RcPendulumTimer);
+pendSettings     = RcPendulumSettings.new(RcPendulumTimer, gui, midiBus);
 pendulumClaess   = RcPendulumBase.dropDownList;
 cfgMgr           = RcConfig.new(optsDir, gui, s);
 
@@ -51,6 +44,7 @@ randomBlackBoard.add("currChannel" -> 0);
 // mapping.
 try {
     MIDIIn.connectAll;
+    midiBus.connectTo(MIDIIn);
 } {};
 
 if ( File.exists( optsDir ).not, {
@@ -147,10 +141,10 @@ SystemClock.sched(1.0, {
     if( sample.notNil, {
         sample.getn(0, RcSynthDef.argCount, { |ary|
             ~runOnAppClock.value({
-                (0..7).do { |idx| gui.knobs[idx].value = ary[idx]; };
+                8.do { |idx| gui.knobs[idx].value = ary[idx]; };
             });
         });
-    }, { (0..7).do { |idx| gui.knobs[idx].value = 0; }; } );
+    }, { 8.do { |idx| gui.knobs[idx].value = 0; }; } );
 };
 
 ~playSample = { |num,vel,initVals|
@@ -369,12 +363,7 @@ gui.allSamples  = allSamples;
             pendSettings.go;
         }, {
             if ( gui.lastDialedDial.notNil && gui.currentSynth.notNil, {
-                gui.pushPendulum(pendSettings.newPendulum(
-                    midiBus,
-                    gui.lastDialedDial,
-                    gui.currentSynth,
-                    gui.currentPad.knobIdx(gui.lastDialedDial) + 1
-                ));
+                gui.pushPendulum(pendSettings.newPendulum());
             });
         });
     });
@@ -436,10 +425,6 @@ MIDIIn.addFuncTo(\control, ~midiPendulumSelector);
 
 MIDIIn.addFuncTo(\control, ~midiSynthSelector);
 MIDIIn.addFuncTo(\control, ~midiGlobalVolume);
-
-MIDIIn.addFuncTo(\control, { |src, chan, num, val|
-    midiBus.push( [src, chan, num, val] )
-});
 
 MIDIIn.addFuncTo(\control, { |src, chan, num, val|
     if ( num == 64, {
