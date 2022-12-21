@@ -47,7 +47,8 @@ RcPendulumBase {
             \FadeOut,       { RcPendulumFadeOut.newEmpty;       },
             \FadeIn,        { RcPendulumFadeIn.newEmpty;        },
             \FadeInOneTime, { RcPendulumFadeInOneTime.newEmpty; },
-            \RecordAll,     { RcPendulumRecordAll.newEmpty;     }
+            \RecordAll,     { RcPendulumRecordAll.newEmpty;     },
+            \Delete,        { RcPendulumRemove.newEmpty;        }
         ).initFromYamlData(yamlData);
 
         obj.startDelay = yamlData.atFail("startDelay", { 0 }).asFloat;
@@ -501,10 +502,12 @@ RcPendulumTimer : RcPendulumBase {
 
         SystemClock.sched(startDelay, {
             if ( this.stopNow, { nil }, {
-                { this.dial.value = this.startValue; }.defer;
-
                 stepFactor = if ( startValue > endValue, {-1}, {1} );
 
+                // Starting at the endValue because the assumption is made
+                // that a dial was moved from startValue to endValue so it's
+                // currently at endValue, so the dial is moved back to the
+                // startValue, from there back to endValue, and so on.
                 this.values = Interval.new( endValue, startValue,
                     0-stepFactor ).asArray ++ Interval.new( startValue,
                         endValue, stepFactor ).asArray;
@@ -808,7 +811,25 @@ RcPendulumRemove : RcPendulumBase {
     }
 
     go {
-        pendulums[dial].do { |a| a.stop(true) };
-        pendulums[dial] = [];
+        pendulums[this.dial].do { |a| a.stop(true) };
+        pendulums[this.dial] = [];
+    }
+
+    asYaml { |pendId|
+        ^format("pend%:\n"        ++
+            "  type: Delete\n"  ++
+            "  startDelay: %\n"   ++
+            "  argnum: %\n",
+            pendId,
+            startDelay.asFloat,
+            argNum);
+    }
+
+    startFromYamlLoad {
+        SystemClock.sched( startDelay, {
+            this.go();
+            this.stop(true);
+        });
+        ^this;
     }
 }

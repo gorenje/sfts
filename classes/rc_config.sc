@@ -19,7 +19,7 @@ RcConfig {
     }
 
     setupGui { |mainWindow|
-        var view = FlowView(mainWindow, Rect(10,10,270,29));
+        var view = FlowView(mainWindow, Rect(10,10,235,29));
         view.background = Color.grey;
 
         RcHelpers.addStaticText(view, "Scape:", 60@25);
@@ -44,6 +44,7 @@ RcConfig {
 
     loadWithDialog {
         Dialog.openPanel( { |path|
+            RcClock.reset;
             s.volume.volume = guiMgr.loadConfigFromFile(path, addSample);
         }, path: optsDir);
     }

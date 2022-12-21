@@ -29,30 +29,21 @@ RcRecorder {
     }
 
     loop_ {
+        this.startTime = Date.localtime.rawSeconds.asInteger;
+
         SystemClock.sched(0.0, {
-            var ldate = Date.localtime;
-            var mins, secs, hrs;
-
-
-            secs = (ldate.rawSeconds - this.startTime.rawSeconds).mod(60);
-            mins = (ldate.rawSeconds - this.startTime.rawSeconds) / 60;
-            hrs = (ldate.rawSeconds - this.startTime.rawSeconds) / 3600;
-
             AppClock.sched(0, {
                 guiButton.states = [
                     btnStates[0],
-                    [format("Stop %:%:%",
-                        hrs.asInteger.asString.padLeft(2,"0"),
-                        mins.asInteger.asString.padLeft(2,"0"),
-                        secs.asInteger.asString.padLeft(2,"0")),
+                    [format("Stop %",
+                        RcClock.clkString( this.startTime,
+                            Date.localtime.rawSeconds.asInteger)),
                         Color.white, Color.red]
                 ];
                 guiButton.value = 1;
             });
 
-            if ( this.server.isRecording, {
-                1.0
-            }, {
+            if ( this.server.isRecording, { 1.0 }, {
                 AppClock.sched(0, {
                     guiButton.states = btnStates;
                     guiButton.value = 0;
@@ -87,15 +78,15 @@ RcRecorder {
 
                 this.currPath = server.recorder.path;
                 this.sendOsc( ["/recFilename", this.currPath.basename] );
-                this.configMgr.saveWithoutDialog(this.currPath.basename.replace(".aiff").replace("SC_","RC_"));
+                this.configMgr.saveWithoutDialog(
+                    this.currPath.basename.replace(".aiff").replace("SC_","RC_")
+                );
             });
             this.go;
         });
     }
 
     go {
-        this.startTime = Date.localtime;
-
         SystemClock.sched(0.0, {
             if ( server.isRecording, {
                 this.loop_();

@@ -514,15 +514,6 @@ cfgMgr.addSample = ~addSample;
 
     var meterView = ServerMeterView.new(s, mainWindow, 1250@10, 2, 2);
 
-    var openAllSamplesButton = Button(mainWindow, Rect(450, 10, 120, 25));
-    openAllSamplesButton.states = [
-        ["Open All Samples", Color.black, Color.white]
-    ];
-    openAllSamplesButton.action =  {
-        gui.pads.collect { |a| a.filename }.reject { |a| a.isNil }.asSet.do { |a|
-            format( "open -a Audacity \"%\"", a ).unixCmd
-        };
-    };
 
     meterView.view.fixedHeight = 500;
 
@@ -536,8 +527,7 @@ cfgMgr.addSample = ~addSample;
 
 // buttons and samples being played
 {
-    var view, exitButton, loadButton;
-    var outDevSelector, inDevSelector, sampleRateButton, serverWinButton;
+    var view, exitButton, outDevSelector, inDevSelector, sampleRateButton;
 
     rcRecorder = RcRecorder.new(s,
         Button(mainWindow, Rect(1650, 10, 120, 25)),
@@ -581,17 +571,27 @@ cfgMgr.addSample = ~addSample;
         sampleRateButton.action = { "open -a 'Audio MIDI Setup'".unixCmd; };
     });
 
-    serverWinButton = RcHelpers.buttonBW("Server Window", mainWindow,
-        Rect(640, 10, 120, 25), {
-            s.makeWindow;
-        });
+    view = FlowView(mainWindow, Rect(360, 10, 420, 30));
 
-    loadButton = RcHelpers.buttonBW("Load Sample", mainWindow,
-        Rect(290, 10, 120, 25), {
-            FileDialog({ |paths|
-                paths.do { |path| ~addSample.value(path); }
-            }, {}, fileMode: 3, stripResult: false);
+    RcHelpers.buttonBW("Load Sample", view, 120@25, {
+        FileDialog({ |paths|
+            paths.do { |path| ~addSample.value(path); }
+        }, {}, fileMode: 3, stripResult: false);
+    });
+
+    RcHelpers.buttonBW("Server Window", view, 120@25, {
+        s.makeWindow;
+    });
+
+    Platform.case( \osx, {
+        RcHelpers.buttonBW("Samples --> Audacity", view, 150@25, {
+            gui.pads.collect { |a| a.filename }.reject { |a| a.isNil }.asSet.do { |a|
+                format( "open -a Audacity \"%\"", a ).unixCmd
+            };
         });
+    });
+
+    RcClock.new( mainWindow );
 
     view = FlowView(mainWindow, Rect(777, 40, 450, 67), margin: 3@5);
     view.background = Color.grey;
@@ -700,18 +700,15 @@ cfgMgr.addSample = ~addSample;
             // midi linking controls
             var view = nil;
 
-            FlowView( view2, Rect(10,10, 450,30));
+            FlowView( view2, Rect(10,10, 580,30));
             view = FlowView(view2, Rect(10, 200, 300, 30), margin: 3@3);
-            view.background = Color.grey;
 
-            RcHelpers.addStaticText(view,"Link Midi Dials. All/None & Toggle:");
-
-            CheckBox.new( view, 15@15, "").action = { |cbx|
+            CheckBox.new( view, 15@25, "").action = { |cbx|
                 gui.pads.do { |paddef|
                     RcHelpers.setValueIfEnabled(paddef.linkMidi,cbx);
                 };
             };
-            CheckBox.new( view, 15@15, "").action = { |cbx|
+            CheckBox.new( view, 15@25, "").action = { |cbx|
                 gui.pads.do { |paddef|
                     RcHelpers.toggleValueIfEnabled(paddef.linkMidi);
                 };
