@@ -26,7 +26,7 @@ osx-release:
 	cd sc_osx_standalone && unzip Frameworks.zip && rm Frameworks.zip
 	cd sc_osx_standalone && timeout 5 sh run.sh || :
 	rm -fr sc_osx_standalone/Resources/sounds/*
-	cp assets/mac_app/exiftool sc_osx_standalone/Resources
+	unzip assets/mac_app/exiftool.zip -d sc_osx_standalone/Resources
 	cd sc_osx_standalone && mkdir Resources/assets
 	cp -R assets/configs sc_osx_standalone/Resources/assets/
 	cp -R assets/samples sc_osx_standalone/Resources/assets/
