@@ -79,7 +79,6 @@ RcSynthDef {
             output = FreeVerb.ar(output * EnvGate.new(i_level:0, fadeTime: 1),
                 mix: mix, room:roomsize, damp:damp);
 
-
             Out.ar(out, output * EnvGate.new);
         }).add;
     }
@@ -209,8 +208,6 @@ RcSynthDef {
             SendReply.kr(Impulse.kr(10),
                 '/pos', [padNr, phasor/BufFrames.ir(bufnum)]);
 
-
-
             #left, right = LinPan2.ar(output, pos: pan); //, level: vol);
 
             output = BiPanB2.ar(left, right, azimuth: elevation, gain: vol);
@@ -267,7 +264,6 @@ RcSynthDef {
             output = BiPanB2.ar(left, right, azimuth: elevation, gain: vol);
 
             output = FreqShift.ar(output, freq: freqShift);
-
 
             output = FreeVerb.ar(output * EnvGate.new(i_level:0, fadeTime: 1),
                 mix: 1, room:roomsize, damp:0);
