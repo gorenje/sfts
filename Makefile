@@ -18,8 +18,8 @@ docker-run-interactive: docker-build
 	docker run --rm --net=host --env DISPLAY=${DISPLAY} --env XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR} --privileged --device /dev/snd --device /dev/midi* --group-add audio --volume ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR} --volume $$XAUTHORITY:${HOME}/.Xauthority -it sfts-supercollider /bin/bash
 
 osx-release:
-	echo "DANGER: Distructive action, edit Makefile and remove this notice"
-	and_remove_this
+	#	echo "DANGER: Distructive action, edit Makefile and remove this notice"
+	#	and_remove_this
 	## Destruction and disaster follow .... beware
 	rm -fr sc_osx_standalone
 	git clone --depth=1 --branch 3.12.2a git@github.com:dathinaios/sc_osx_standalone.git

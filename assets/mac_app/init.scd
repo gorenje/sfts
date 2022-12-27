@@ -514,15 +514,6 @@ cfgMgr.addSample = ~addSample;
 
     var meterView = ServerMeterView.new(s, mainWindow, 1250@10, 2, 2);
 
-    var openAllSamplesButton = Button(mainWindow, Rect(450, 10, 120, 25));
-    openAllSamplesButton.states = [
-        ["Open All Samples", Color.black, Color.white]
-    ];
-    openAllSamplesButton.action =  {
-        gui.pads.collect { |a| a.filename }.reject { |a| a.isNil }.asSet.do { |a|
-            format( "open -a Audacity \"%\"", a ).unixCmd
-        };
-    };
 
     meterView.view.fixedHeight = 500;
 
@@ -536,8 +527,7 @@ cfgMgr.addSample = ~addSample;
 
 // buttons and samples being played
 {
-    var view, exitButton, loadButton;
-    var outDevSelector, inDevSelector, sampleRateButton, serverWinButton;
+    var view, exitButton, outDevSelector, inDevSelector, sampleRateButton;
 
     rcRecorder = RcRecorder.new(s,
         Button(mainWindow, Rect(1650, 10, 120, 25)),
@@ -545,34 +535,15 @@ cfgMgr.addSample = ~addSample;
         cfgMgr
     );
 
-    exitButton = Button(mainWindow, Rect(1650, 40, 120, 25));
-    exitButton.states = [["Quit", Color.black, Color.white]];
-    exitButton.action = {
-        var w = Window("Really Quit?",
-            resizable: false,
-            bounds: Rect((Window.screenBounds.width)/2,
-                (Window.screenBounds.height-180)/2, 330, 230)).front;
-
-        var cancelBut = Button(w, Rect(10, 180, 120, 25));
-        var exitBut = Button(w, Rect(200, 180, 120, 25));
-        var txt = StaticText.new(w, Rect(130, 60, 200, 30));
-
-        txt.string = "Really Quit?";
-
-        w.alwaysOnTop = true;
-
-        cancelBut.states = [["Cancel", Color.black, Color.white]];
-        cancelBut.action = { w.close; };
-
-        exitBut.states = [["Yes Quit", Color.black, Color.white]];
-        exitBut.action = {
+    exitButton = RcHelpers.buttonBW("Quit",mainWindow,Rect(1650,40,120,25),{
+        RcHelpers.confirmExit( {
             rcRecorder.quitting;
             try { gui.padCtrl.allOff; } {};
             SystemClock.sched(0.2, {
                 s.quit( { 0.exit; } );
             });
-        };
-    };
+        });
+    });
 
     Platform.case( \osx, {
         outDevSelector = PopUpMenu(mainWindow, Rect(780, 10, 150, 25));
@@ -600,18 +571,27 @@ cfgMgr.addSample = ~addSample;
         sampleRateButton.action = { "open -a 'Audio MIDI Setup'".unixCmd; };
     });
 
+    view = FlowView(mainWindow, Rect(360, 10, 420, 30));
 
-    serverWinButton = Button(mainWindow, Rect(640, 10, 120, 25));
-    serverWinButton.states = [["Server Window", Color.black, Color.white]];
-    serverWinButton.action = { s.makeWindow; };
-
-    loadButton = Button(mainWindow, Rect(290, 10, 150, 25));
-    loadButton.states = [["Load Sample", Color.black, Color.white]];
-    loadButton.action = {
+    RcHelpers.buttonBW("Load Sample", view, 120@25, {
         FileDialog({ |paths|
             paths.do { |path| ~addSample.value(path); }
         }, {}, fileMode: 3, stripResult: false);
-    };
+    });
+
+    RcHelpers.buttonBW("Server Window", view, 120@25, {
+        s.makeWindow;
+    });
+
+    Platform.case( \osx, {
+        RcHelpers.buttonBW("Samples --> Audacity", view, 150@25, {
+            gui.pads.collect { |a| a.filename }.reject { |a| a.isNil }.asSet.do { |a|
+                format( "open -a Audacity \"%\"", a ).unixCmd
+            };
+        });
+    });
+
+    RcClock.new( mainWindow );
 
     view = FlowView(mainWindow, Rect(777, 40, 450, 67), margin: 3@5);
     view.background = Color.grey;
@@ -667,20 +647,22 @@ cfgMgr.addSample = ~addSample;
     gui.pendulumSelection.action = { |button|
         pendSettings.klzPendulum = pendulumClaess[button.value][1];
     };
-    gui.bb["pendulumSelectorCounter"] = RcGuiCounter.new(0,3);
+    gui.bb["pendulumSelectorCounter"] = RcGuiCounter.new(0,5);
 
-    ~psBut = { |name, initVal=0, minValue=0|
-        EZKnob(view, 180@24, name,
-            ControlSpec.new(minval: minValue, maxval: 59,
-                warp: 'lin', step: 0.1, default: initVal, units: "secs"),
-            unitWidth: 0, initVal: initVal, layout:\horz, labelWidth: 80)
-        .setColors(Color.grey,Color.white)
-        .font_(Font("Helvetica",11));
-    };
+    {
+        var psBut = { |name, initVal=0, minValue=0|
+            EZKnob(view, 180@24, name,
+                ControlSpec.new(minval: minValue, maxval: 59,
+                    warp: 'lin', step: 0.1, default: initVal, units: "secs"),
+                unitWidth: 0, initVal: initVal, layout:\horz, labelWidth: 80)
+            .setColors(Color.grey,Color.white)
+            .font_(Font("Helvetica",11));
+        };
 
-    pendSettings.dials.start    = ~psBut.value( "Start", 0 );
-    pendSettings.dials.duration = ~psBut.value( "Duration", 1, 0.1 );
-    pendSettings.dials.end      = ~psBut.value( "End", 0 );
+        pendSettings.dials.start    = psBut.value( "Start", 0 );
+        pendSettings.dials.duration = psBut.value( "Duration", 1, 0.1 );
+        pendSettings.dials.end      = psBut.value( "End", 0 );
+    }.value();
 
     // dial settings
     view = FlowView(mainWindow, Rect(10, 50, 750, 60));
@@ -718,18 +700,15 @@ cfgMgr.addSample = ~addSample;
             // midi linking controls
             var view = nil;
 
-            FlowView( view2, Rect(10,10, 450,30));
+            FlowView( view2, Rect(10,10, 580,30));
             view = FlowView(view2, Rect(10, 200, 300, 30), margin: 3@3);
-            view.background = Color.grey;
 
-            RcHelpers.addStaticText(view,"Link Midi Dials. All/None & Toggle:");
-
-            CheckBox.new( view, 15@15, "").action = { |cbx|
+            CheckBox.new( view, 15@25, "").action = { |cbx|
                 gui.pads.do { |paddef|
                     RcHelpers.setValueIfEnabled(paddef.linkMidi,cbx);
                 };
             };
-            CheckBox.new( view, 15@15, "").action = { |cbx|
+            CheckBox.new( view, 15@25, "").action = { |cbx|
                 gui.pads.do { |paddef|
                     RcHelpers.toggleValueIfEnabled(paddef.linkMidi);
                 };
@@ -911,7 +890,6 @@ cfgMgr.addSample = ~addSample;
 // setup presets info
 {
     var view = FlowView(mainWindow, Rect(1250, 340, 530, 300));
-    var loadButton, saveButton;
 
     view.background = Color.grey;
 
